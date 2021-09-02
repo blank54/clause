@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+
+# PyPI
+dist/
+build/
+*.egg-info/
+*.manifest
+
+# Experiments
+tmp*
+test*
+
+# Jupyter notebook
+*.ipynb
+.ipynb_checkpoints/
+
+# Data
+*.xlsx
+*.pdf
+*.sql
+*.json
+*.dill
+*.pk
+*.bin
+*.html
+*.png
+*.csv
+*.h5
+*.txt
