@@ -16,7 +16,9 @@ import pickle as pk
 from collections import defaultdict
 
 
-def build_corpus(fpath_data):
+def build_corpus(fname_data):
+    fpath_data = os.path.join(clpath.fdir_data, fname_data)
+
     corpus = []
     df = pd.read_excel(fpath_data)
     for idx, row in df.iterrows():
@@ -24,8 +26,7 @@ def build_corpus(fpath_data):
         corpus.append(clause)
     return corpus
 
-def save_corpus(corpus):
-    fname_corpus = 'clause.pk'
+def save_corpus(corpus, fname_corpus):
     fpath_corpus = os.path.join(clpath.fdir_corpus, fname_corpus)
     with open(fpath_corpus, 'wb') as f:
         pk.dump(corpus, f)
@@ -37,7 +38,7 @@ def save_corpus(corpus):
 
 if __name__ == '__main__':
     fname_data = 'clause.xlsx'
-    fpath_data = os.path.join(clpath.fdir_data, fname_data)
+    fname_corpus = 'clause.pk'
 
-    corpus = build_corpus(fpath_data=fpath_data)
-    save_corpus(corpus=corpus)
+    corpus = build_corpus(fname_data=fname_data)
+    save_corpus(corpus=corpus, fname_corpus=fname_corpus)
