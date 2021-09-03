@@ -5,9 +5,10 @@
 
 
 class Doc:
-    def __init__(self, tag, text):
+    def __init__(self, tag, text, **kwargs):
         self.tag = tag
         self.text = text
+        self.normalized_text = kwargs.get('normalized_text')
 
         self.country = tag.split('_')[0]
         self.state = tag.split('_')[1]
