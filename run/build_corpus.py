@@ -8,9 +8,9 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from clutil import ClPath, ClFunc
-clpath = ClPath()
-clfunc = ClFunc()
+from clutil import ProvPath, ProvFunc
+provpath = ProvPath()
+provfunc = ProvFunc()
 
 import pandas as pd
 import pickle as pk
@@ -18,26 +18,26 @@ from collections import defaultdict
 
 
 def build_corpus(fname_data):
-    fpath_data = os.path.join(clpath.fdir_data, fname_data)
+    fpath_data = os.path.join(provpath.fdir_data, fname_data)
 
     corpus = []
     df = pd.read_excel(fpath_data)
 
     print('Build corpus')
     for idx, row in df.iterrows():
-        clause = Doc(tag=row['tag'], text=row['text'], normalized_text=clfunc.normalize(text=row['text']))
+        clause = Doc(tag=row['tag'], text=row['text'], normalized_text=provfunc.normalize(text=row['text']))
         corpus.append(clause)
         print('\r  | Normalization: {:,d}'.format(idx+1), end='')
     print('\n  | Total {:,d} clauses'.format(len(corpus)))
     return corpus
 
 def save_corpus(corpus, fname_corpus):
-    fpath_corpus = os.path.join(clpath.fdir_corpus, fname_corpus)
+    fpath_corpus = os.path.join(provpath.fdir_corpus, fname_corpus)
     with open(fpath_corpus, 'wb') as f:
         pk.dump(corpus, f)
 
     print('Save corpus')
-    print('  | fdir : {}'.format(clpath.fdir_corpus))
+    print('  | fdir : {}'.format(provpath.fdir_corpus))
     print('  | fname: {}'.format(fname_corpus))
 
 
