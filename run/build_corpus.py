@@ -8,7 +8,7 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from clutil import ProvPath, ProvFunc
+from provutil import ProvPath, ProvFunc
 provpath = ProvPath()
 provfunc = ProvFunc()
 
@@ -25,10 +25,10 @@ def build_corpus(fname_data):
 
     print('Build corpus')
     for idx, row in df.iterrows():
-        clause = Doc(tag=row['tag'], text=row['text'], normalized_text=provfunc.normalize(text=row['text']))
-        corpus.append(clause)
+        provision = Doc(tag=row['tag'], text=row['text'], normalized_text=provfunc.normalize(text=row['text']))
+        corpus.append(provision)
         print('\r  | Normalization: {:,d}'.format(idx+1), end='')
-    print('\n  | Total {:,d} clauses'.format(len(corpus)))
+    print('\n  | Total {:,d} provisions'.format(len(corpus)))
     return corpus
 
 def save_corpus(corpus, fname_corpus):
@@ -42,8 +42,8 @@ def save_corpus(corpus, fname_corpus):
 
 
 if __name__ == '__main__':
-    fname_data = 'clause.xlsx'
-    fname_corpus = 'clause.pk'
+    fname_data = 'provision.xlsx'
+    fname_corpus = 'provision.pk'
 
     corpus = build_corpus(fname_data=fname_data)
     save_corpus(corpus=corpus, fname_corpus=fname_corpus)
