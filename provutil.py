@@ -4,6 +4,8 @@
 # Configuration
 import os
 import re
+import datetime
+import numpy as np
 import pickle as pk
 from copy import deepcopy
 
@@ -68,3 +70,14 @@ class ProvFunc(ProvPath):
         with open(fpath_corpus, 'rb') as f:
             corpus = pk.load(f)
         return corpus
+
+
+class ProvEval:
+    def flat_accuracy(self, preds, labels):
+        pred_flat = np.argmax(preds, axis=1).flatten()
+        labels_flat = labels.flatten()
+        return np.sum(pred_flat == labels_flat)/len(labels_flat)
+
+    def format_time(self, elapsed):
+        elapsed_rounded = int(round((elapsed))) #반올림
+        return str(datetime.timedelta(seconds=elapsed_rounded))
