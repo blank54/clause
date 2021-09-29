@@ -252,7 +252,7 @@ def model_training(train_dataloader, valid_dataloader, device):
 
 if __name__ == '__main__':
     ## Parameters
-    TARGET_LABEL = 'METHOD'
+    TARGET_LABEL = 'RnR'
 
     TOKENIZER = BertTokenizer.from_pretrained('bert-base-multilingual-cased', do_lower_case=True)
 
