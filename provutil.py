@@ -4,6 +4,7 @@
 # Configuration
 import os
 import re
+import pickle as pk
 from copy import deepcopy
 
 
@@ -15,7 +16,7 @@ class ProvPath:
     fdir_model = os.path.sep.join((root, 'model'))
 
 
-class ProvFunc:
+class ProvFunc(ProvPath):
     def normalize(self, text, do_lower=True, do_marking=True):
         if do_lower:
             text = deepcopy(text.lower())
@@ -50,3 +51,20 @@ class ProvFunc:
         text = re.sub('\s+\s', ' ', text).strip()
 
         return text
+
+    def save_corpus(self, corpus, fname_corpus):
+        print('============================================================')
+        print('Save corpus')
+
+        fpath_corpus = os.path.join(self.fdir_corpus, fname_corpus)
+        with open(fpath_corpus, 'wb') as f:
+            pk.dump(corpus, f)
+
+        print('  | fdir : {}'.format(self.fdir_corpus))
+        print('  | fname: {}'.format(fname_corpus))
+
+    def read_corpus(self, fname_corpus):
+        fpath_corpus = os.path.join(self.fdir_corpus, fname_corpus)
+        with open(fpath_corpus, 'rb') as f:
+            corpus = pk.load(f)
+        return corpus
