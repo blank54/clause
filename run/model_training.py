@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+http://yonghee.io/bert_binary_classification_naver/
+'''
+
 # Configuration
 import os
 import sys
@@ -27,32 +31,27 @@ import numpy as np
 import pandas as pd
 import random
 from tqdm import tqdm
+from collections import defaultdict
 
-def select_label(corpus, target_label):
-    print('============================================================')
-    print('Target label: {}'.format(target_label))
 
-    corpus_targetted = []
-    for doc in corpus:
-        if target_label in doc.labels:
-            doc.label = 1
+def label_encoding(labels, target_label):
+    labels_encoded = []
+    for label in labels:
+        if target_label in label:
+            labels_encoded.append(1)
         else:
-            doc.label = 0
-        corpus_targetted.append(doc)
+            labels_encoded.append(0)
 
-    print('  | # of target docs   : {:,}'.format(len([d for d in corpus_targetted if d.label == 1])))
-    print('  | # of remaining docs: {:,}'.format(len([d for d in corpus_targetted if d.label == 0])))
-
-    return corpus_targetted
+    return labels_encoded
 
 def data_split(corpus):
-    global TRAIN_TEST_RATIO
+    global TRAIN_TEST_RATIO, RANDOM_STATE
 
     print('============================================================')
     print('Train-test split')
     print('  | Train-Test ratio: {}'.format(TRAIN_TEST_RATIO))
 
-    train, test = train_test_split(corpus, train_size=TRAIN_TEST_RATIO)
+    train, test = train_test_split(corpus, train_size=TRAIN_TEST_RATIO, random_state=RANDOM_STATE)
 
     print('  | # of corpus: {:,}'.format(len(corpus)))
     print('  | # of train : {:,}'.format(len(train)))
@@ -62,10 +61,6 @@ def data_split(corpus):
 
 def tokenize(data):
     global TOKENIZER
-
-    print('============================================================')
-    print('Tokenization')
-
 
     tokenized_docs = []
     with tqdm(total=len(data)) as pbar:
@@ -78,9 +73,6 @@ def tokenize(data):
 def padding(tokenized_docs):
     global TOKENIZER, MAX_SENT_LEN
 
-    print('============================================================')
-    print('Padding')
-
     docs_by_ids = []
     with tqdm(total=len(tokenized_docs)) as pbar:
         for doc in tokenized_docs:
@@ -92,9 +84,6 @@ def padding(tokenized_docs):
     return padded_docs
 
 def attention_masking(padded_docs):
-    print('============================================================')
-    print('Attention masking')
-
     attention_masks = []
     for seq in padded_docs:
         seq_mask = [float(i>0) for i in seq]
@@ -102,9 +91,9 @@ def attention_masking(padded_docs):
 
     return attention_masks
 
-def data_adjustment(inputs, labels, masks, option):
+def build_dataloader(inputs, labels, masks, target_label, option):
     inputs = torch.tensor(inputs)
-    labels = torch.tensor(labels)
+    labels = torch.tensor(label_encoding(labels=labels, target_label=target_label))
     masks = torch.tensor(masks)
 
     data = TensorDataset(inputs, masks, labels)
@@ -114,25 +103,37 @@ def data_adjustment(inputs, labels, masks, option):
     elif option == 'valid':
         sampler = SequentialSampler(data)
     elif option == 'test':
-        pass
+        sampler = RandomSampler(data)
 
-    dataloader = DataLoader(data, sampler=sampler, batch_size=BATCH_SIZE)
-    
-    return dataloader
+    return DataLoader(data, sampler=sampler, batch_size=BATCH_SIZE)
 
-def train_data_preparation(train_padded, train_attention_masks):
+def train_data_preparation(train):
     global TRAIN_VALID_RATIO, RANDOM_STATE, BATCH_SIZE
 
     print('============================================================')
     print('Train data preparation')
 
-    train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(train_padded, [d.label for d in train], random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+    train_tokenized = tokenize(data=train)
+    train_padded = padding(tokenized_docs=train_tokenized)
+    train_attention_masks = attention_masking(padded_docs=train_padded)
+
+    train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(train_padded, [d.labels for d in train], random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
     train_masks, valid_masks, _, _ = train_test_split(train_attention_masks, train_padded, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
 
-    train_dataloader = data_adjustment(inputs=train_inputs, labels=train_labels, masks=train_masks, option='train')
-    valid_dataloader = data_adjustment(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, option='valid')
+    return train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks
 
-    return train_dataloader, valid_dataloader
+
+def test_data_preparation(test):
+    global BATCH_SIZE
+
+    print('============================================================')
+    print('Test data preparation')
+
+    test_tokenized = tokenize(data=test)
+    test_padded = padding(tokenized_docs=test_tokenized)
+    test_attention_masks = attention_masking(padded_docs=test_padded)
+
+    return test_padded, [d.labels for d in test], test_attention_masks
 
 def gpu_allocation():
     print('============================================================')
@@ -148,17 +149,14 @@ def gpu_allocation():
 
     return device
 
-def model_training(train_dataloader, valid_dataloader, device):
-    global RANDOM_STATE, EPOCHS
+def model_training(train_dataloader, valid_dataloader, result):
+    global RANDOM_STATE, EPOCHS, DEVICE, target_label
 
     print('============================================================')
-    print('Model identification')
+    print('  | Model training')
 
     model = BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased', num_labels=2)
     model.cuda()
-
-    print('============================================================')
-    print('Setup schedular')
 
     optimizer = AdamW(model.parameters(),
                       lr=LEARNING_RATE, #학습률
@@ -171,9 +169,6 @@ def model_training(train_dataloader, valid_dataloader, device):
                                                 num_warmup_steps=0,
                                                 num_training_steps=total_steps)
 
-    print('============================================================')
-    print('Model training')
-
     random.seed(RANDOM_STATE)
     np.random.seed(RANDOM_STATE)
     torch.manual_seed(RANDOM_STATE)
@@ -181,105 +176,149 @@ def model_training(train_dataloader, valid_dataloader, device):
 
     model.zero_grad()
     for epoch in range(EPOCHS):
-        ## Training
-        total_loss = 0 # 로스 초기화
-        model.train() # 훈련모드로 변경
-            
-        for step, batch in enumerate(train_dataloader): # 데이터로더에서 배치만큼 반복하여 가져옴
-            if step % 500 == 0 and not step == 0: # 경과 정보 표시
-                elapsed = proveval.format_time(time.time() - t0)
-                print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(train_dataloader), elapsed))
+        train_loss = 0
+        valid_loss = 0
+        valid_accuracy = 0
+        nb_valid_steps = 0
 
-            batch = tuple(t.to(device) for t in batch) # 배치를 GPU에 넣음
-            b_input_ids, b_input_mask, b_labels = batch # 배치에서 데이터 추출
+        model.train()   
+        for step, batch in enumerate(train_dataloader):
+            batch = tuple(t.to(DEVICE) for t in batch)
+            b_input_ids, b_input_mask, b_labels = batch
 
-            # Forward 수행
             outputs = model(b_input_ids, 
                             token_type_ids=None, 
                             attention_mask=b_input_mask, 
                             labels=b_labels)
-            
-            
+
             loss = outputs[0] # 로스 구함
-            total_loss += loss.item() # 총 로스 계산
+            train_loss += loss.item() # 총 로스 계산
+
             loss.backward() # Backward 수행으로 그래디언트 계산
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0) # 그래디언트 클리핑
             optimizer.step() # 그래디언트를 통해 가중치 파라미터 업데이트
-
             scheduler.step() # 스케줄러로 학습률 감소
             model.zero_grad() # 그래디언트 초기화
 
         ## Validation
-        model.eval() # 평가모드로 변경
-
-        # 변수 초기화
-        eval_loss, eval_accuracy = 0, 0
-        nb_eval_steps, nb_eval_examples = 0, 0
-
-        for batch in valid_dataloader: # 데이터로더에서 배치만큼 반복하여 가져옴
-            batch = tuple(t.to(device) for t in batch) # 배치를 GPU에 넣음
-            b_input_ids, b_input_mask, b_labels = batch # 배치에서 데이터 추출
+        model.eval()
+        for batch in valid_dataloader:
+            batch = tuple(t.to(DEVICE) for t in batch)
+            b_input_ids, b_input_mask, b_labels = batch
             
             with torch.no_grad(): # 그래디언트 계산 안함
                 # Forward 수행
                 outputs = model(b_input_ids, 
                                 token_type_ids=None, 
-                                attention_mask=b_input_mask)
+                                attention_mask=b_input_mask,
+                                labels=b_labels)
             
-            logits = outputs[0] # 로스 구함
+            loss = outputs[0]
+            valid_loss += loss.item()
 
-            # CPU로 데이터 이동
+            logits = outputs[1]
             logits = logits.detach().cpu().numpy()
             label_ids = b_labels.to('cpu').numpy()
-            
-            # 출력 로짓과 라벨을 비교하여 정확도 계산
-            tmp_eval_accuracy = proveval.flat_accuracy(logits, label_ids)
-            eval_accuracy += tmp_eval_accuracy
-            nb_eval_steps += 1
+
+            tmp_valid_accuracy = proveval.flat_accuracy(logits, label_ids)
+            valid_accuracy += tmp_valid_accuracy
+            nb_valid_steps += 1
 
         ## Report status
-        avg_train_loss = total_loss / len(train_dataloader) # 평균 로스 계산
-        current_accuracy = eval_accuracy/nb_eval_steps
-        print('  | ({}/{}) Loss: {:.02f} | Accuracy: {:.02f}'.format(epoch+1, EPOCHS, avg_train_loss, current_accuracy))
+        avg_train_loss = train_loss/len(train_dataloader)
+        avg_valid_loss = valid_loss/len(valid_dataloader)
+        current_accuracy = valid_accuracy/nb_valid_steps
+        
+        result['target_label'].append(target_label)
+        result['epoch'].append(epoch+1)
+        result['train_loss'].append(avg_train_loss)
+        result['valid_loss'].append(avg_valid_loss)
+        result['valid_accuracy'].append(current_accuracy)
+        log = '  | Epochs: ({}/{})   TrainLoss: {:.03f}   ValidLoss: {:.03f}   ValidAccuracy: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, current_accuracy)
+        print('\r'+log, end='')
+
+    print('\n  | Training complete')
+    return model, result
+
+def model_evaluation(model, test_dataloader):
+    global DEVICE
 
     print('============================================================')
-    print('Training complete')
+    print('  | Model evaluation')
 
-    return model
+    test_accuracy = 0
+    nb_test_steps = 0
 
+    model.eval()
+    for step, batch in enumerate(test_dataloader):
+        batch = tuple(t.to(DEVICE) for t in batch)
+        b_input_ids, b_input_mask, b_labels = batch
 
+        with torch.no_grad():
+            outputs = model(b_input_ids,
+                            token_type_ids=None,
+                            attention_mask=b_input_mask)
+
+        logits = outputs[0]
+        logits = logits.detach().cpu().numpy()
+        label_ids = b_labels.to('cpu').numpy()
+
+        tmp_test_accuracy = proveval.flat_accuracy(logits, label_ids)
+        test_accuracy += tmp_test_accuracy
+        nb_test_steps += 1
+
+    ## Report result
+    total_accuracy = test_accuracy/nb_test_steps
+    print('  | TestAccuracy: {:.03f}'.format(total_accuracy))
+    print('  | Evaluation complete')
 
 
 if __name__ == '__main__':
     ## Parameters
-    TARGET_LABEL = 'RnR'
-
     TOKENIZER = BertTokenizer.from_pretrained('bert-base-multilingual-cased', do_lower_case=True)
 
-    TRAIN_TEST_RATIO = 0.7
-    TRAIN_VALID_RATIO = 0.9
+    TRAIN_TEST_RATIO = 0.8
+    TRAIN_VALID_RATIO = 0.75
     
     MAX_SENT_LEN = 128
     BATCH_SIZE = 16
     RANDOM_STATE = 42
 
-    EPOCHS = 100
+    EPOCHS = 30
     LEARNING_RATE = 2e-5
 
     ## FNAME
     fname_corpus = 'provision_labeled.pk'
 
-    ## Data import
+    train_ratio = TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100
+    valid_ratio = TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100
+    test_ratio = (1-TRAIN_TEST_RATIO)*100
+    
+    ## Data preparation
     corpus = provfunc.read_corpus(fname_corpus=fname_corpus)
-    corpus_targetted = select_label(corpus=corpus, target_label=TARGET_LABEL)
-    train, test = data_split(corpus=corpus_targetted)
+    train, test = data_split(corpus=corpus)
+    
+    train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
+    test_inputs, test_labels, test_masks = test_data_preparation(test=test)
 
-    ## Trainset
-    train_tokenized = tokenize(data=train)
-    train_padded = padding(tokenized_docs=train_tokenized)
-    train_attention_masks = attention_masking(padded_docs=train_padded)
-    train_dataloader, valid_dataloader = train_data_preparation(train_padded=train_padded, train_attention_masks=train_attention_masks)
+    ## Model development
+    DEVICE = gpu_allocation()
+    for target_label in ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']:
+        print('============================================================')
+        print('Target category: <{}>'.format(target_label))
 
-    ## Model identification
-    device = gpu_allocation()
-    model = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, device=device)
+        ## Build dataloader
+        train_dataloader = build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, target_label=target_label, option='train')
+        valid_dataloader = build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, target_label=target_label, option='valid')
+        test_dataloader = build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, target_label=target_label, option='test')
+
+        ## Model training
+        result = defaultdict(list)
+        model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, result=result)
+
+        ## Model evaluation
+        model_evaluation(model=model, test_dataloader=test_dataloader)
+
+        ## Export result
+        fname_result = 'result_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
+        provfunc.save_result(result=result, fname_result=fname_result)
