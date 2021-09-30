@@ -290,9 +290,9 @@ if __name__ == '__main__':
     ## FNAME
     fname_corpus = 'provision_labeled.pk'
 
-    train_ratio = int(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
-    valid_ratio = int(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
-    test_ratio = int((1-TRAIN_TEST_RATIO)*100)
+    train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
+    valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
+    test_ratio = round((1-TRAIN_TEST_RATIO)*100)
     
     ## Data preparation
     corpus = provfunc.read_corpus(fname_corpus=fname_corpus)
