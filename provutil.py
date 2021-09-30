@@ -85,6 +85,16 @@ class ProvFunc(ProvPath):
         print('  | fdir : {}'.format(self.fdir_result))
         print('  | fname: {}'.format(fname_result))
 
+    def encode_labels_binary(self, labels, target_label):
+        labels_encoded = []
+        for label_list in labels:
+            if target_label in label_list:
+                labels_encoded.append(1)
+            else:
+                labels_encoded.append(0)
+
+        return labels_encoded
+
 
 class ProvEval:
     def flat_accuracy(self, preds, labels):

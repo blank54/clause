@@ -34,16 +34,6 @@ from tqdm import tqdm
 from collections import defaultdict
 
 
-def label_encoding(labels, target_label):
-    labels_encoded = []
-    for label in labels:
-        if target_label in label:
-            labels_encoded.append(1)
-        else:
-            labels_encoded.append(0)
-
-    return labels_encoded
-
 def data_split(corpus):
     global TRAIN_TEST_RATIO, RANDOM_STATE
 
@@ -93,7 +83,7 @@ def attention_masking(padded_docs):
 
 def build_dataloader(inputs, labels, masks, target_label, option):
     inputs = torch.tensor(inputs)
-    labels = torch.tensor(label_encoding(labels=labels, target_label=target_label))
+    labels = torch.tensor(provfunc.encode_labels_binary(labels=labels, target_label=target_label))
     masks = torch.tensor(masks)
 
     data = TensorDataset(inputs, masks, labels)
