@@ -152,7 +152,7 @@ def gpu_allocation():
 def model_training(train_dataloader, valid_dataloader, result):
     global RANDOM_STATE, EPOCHS, DEVICE, target_label
 
-    print('============================================================')
+    print('------------------------------------------------------------')
     print('  | Model training')
 
     model = BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased', num_labels=2)
@@ -206,8 +206,7 @@ def model_training(train_dataloader, valid_dataloader, result):
             batch = tuple(t.to(DEVICE) for t in batch)
             b_input_ids, b_input_mask, b_labels = batch
             
-            with torch.no_grad(): # 그래디언트 계산 안함
-                # Forward 수행
+            with torch.no_grad():
                 outputs = model(b_input_ids, 
                                 token_type_ids=None, 
                                 attention_mask=b_input_mask,
@@ -243,7 +242,7 @@ def model_training(train_dataloader, valid_dataloader, result):
 def model_evaluation(model, test_dataloader):
     global DEVICE
 
-    print('============================================================')
+    print('------------------------------------------------------------')
     print('  | Model evaluation')
 
     test_accuracy = 0
