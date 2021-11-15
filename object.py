@@ -22,7 +22,6 @@ class Doc:
         self.section_tag = '{}_{}_{}_{}_{}'.format(self.country, self.state, self.year, self.chapter_id, self.section_id)
 
         self.labels = []
-        self.label = ''
 
     def __str__(self):
         return self.text
