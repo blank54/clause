@@ -276,7 +276,7 @@ if __name__ == '__main__':
     EPOCHS = 30
     LEARNING_RATE = 2e-5
 
-    ## FNAME
+    ## Filenames
     fname_corpus = 'provision_labeled.pk'
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
