@@ -28,7 +28,7 @@ def build_corpus(fname_data):
     for idx, row in df.iterrows():
         provision = Doc(tag=row['tag'], text=row['text'])
         corpus.append(provision)
-        print('\r  | Normalization: {:,d}'.format(idx+1), end='')
+
     print('\n  | Total {:,d} provisions'.format(len(corpus)))
     return corpus
 
@@ -47,8 +47,8 @@ def export_data_for_labeling(corpus):
     print('  | fdir : {}'.format(provpath.fdir_data))
     print('  | fname: {}'.format(fname_data_for_labeling))
 
-def read_labeled_data(fname_provision_labeled):
-    fpath_provision_labeled = os.path.join(provpath.fdir_data, fname_provision_labeled)
+def read_labeled_data(fname_labeled_data):
+    fpath_provision_labeled = os.path.join(provpath.fdir_data, fname_labeled_data)
     with open(fpath_provision_labeled, 'r') as f:
         labeled_data = [json.loads(line) for line in list(f)]
     return labeled_data
@@ -80,12 +80,10 @@ def verify_labels(corpus):
         print('  | Labels: {}'.format(', '.join(doc.labels)))
 
 
-
 if __name__ == '__main__':
     fname_data = 'provision.xlsx'
-    fname_corpus = 'provision.pk'
-    fname_corpus_labeled = 'provision_labeled.pk'
-    fname_provision_labeled = 'provision_labeled.jsonl'
+    fname_corpus = 'corpus.pk'
+    fname_labeled_data = 'provision_labeled.jsonl'
 
     ## Initialize corpus
     corpus = build_corpus(fname_data=fname_data)
@@ -94,7 +92,7 @@ if __name__ == '__main__':
     export_data_for_labeling(corpus=corpus)
 
     ## Assign labels
-    labeled_data = read_labeled_data(fname_provision_labeled=fname_provision_labeled)
+    labeled_data = read_labeled_data(fname_labeled_data=fname_labeled_data)
     corpus_labeled = assign_labels(corpus=corpus, labeled_data=labeled_data)
-    provfunc.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus_labeled)
+    provfunc.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
     verify_labels(corpus=corpus_labeled)
