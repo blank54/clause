@@ -278,7 +278,7 @@ if __name__ == '__main__':
     LEARNING_RATE = 2e-5
 
     ## Filenames
-    fname_corpus = 'corpus_preprocessed.pk'
+    fname_corpus = 'corpus_T-t_P-t_N-t_S-t_L-t.pk'
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
