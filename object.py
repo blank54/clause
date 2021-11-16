@@ -8,8 +8,6 @@ class Doc:
     def __init__(self, tag, text, **kwargs):
         self.tag = tag
         self.text = text
-        self.normalized_text = kwargs.get('normalized_text')
-        self.text_as_input = '[CLS] {} [SEP]'.format(self.normalized_text)
 
         self.country = tag.split('_')[0]
         self.state = tag.split('_')[1]
@@ -22,6 +20,12 @@ class Doc:
         self.section_tag = '{}_{}_{}_{}_{}'.format(self.country, self.state, self.year, self.chapter_id, self.section_id)
 
         self.labels = []
+
+        self.pos_tagged_text = kwargs.get('pos_tagged_text')
+        self.normalized_text = kwargs.get('normalized_text')
+        self.tokenized_text = kwargs.get('normalized_text')
+        self.stopword_removed_text = kwargs.get('stopword_removed_text')
+        self.lemmatized_text = kwargs.get('lemmatized_text')
 
     def __str__(self):
         return self.text
