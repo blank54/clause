@@ -26,7 +26,7 @@ def build_corpus(fname_data):
 
     print('Build corpus')
     for idx, row in df.iterrows():
-        provision = Doc(tag=row['tag'], text=row['text'], normalized_text=provfunc.normalize(text=row['text']))
+        provision = Doc(tag=row['tag'], text=row['text'])
         corpus.append(provision)
         print('\r  | Normalization: {:,d}'.format(idx+1), end='')
     print('\n  | Total {:,d} provisions'.format(len(corpus)))
@@ -69,11 +69,11 @@ def assign_labels(corpus, labeled_data):
     print('  | # of corpus with labels: {:,}'.format(len(corpus_labeled)))
     return corpus_labeled
 
-def verify_labels(corpus_labeled):
+def verify_labels(corpus):
     print('============================================================')
     print('Verify labels')
 
-    for doc in corpus_labeled[:5]:
+    for doc in corpus[:5]:
         print('--------------------------------------------------')
         print('  | Tag   : {}'.format(doc.tag))
         print('  | Text  : {}...'.format(doc.text[:50]))
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     labeled_data = read_labeled_data(fname_provision_labeled=fname_provision_labeled)
     corpus_labeled = assign_labels(corpus=corpus, labeled_data=labeled_data)
     provfunc.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus_labeled)
-    verify_labels(corpus_labeled)
+    verify_labels(corpus=corpus_labeled)
