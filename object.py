@@ -21,9 +21,9 @@ class Doc:
 
         self.labels = []
 
+        self.tokenized_text = kwargs.get('normalized_text')
         self.pos_tagged_text = kwargs.get('pos_tagged_text')
         self.normalized_text = kwargs.get('normalized_text')
-        self.tokenized_text = kwargs.get('normalized_text')
         self.stopword_removed_text = kwargs.get('stopword_removed_text')
         self.lemmatized_text = kwargs.get('lemmatized_text')
 
