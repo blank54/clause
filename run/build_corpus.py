@@ -8,9 +8,9 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvFunc
+from provutil import ProvPath, ProvIO
 provpath = ProvPath()
-provfunc = ProvFunc()
+provio = ProvIO()
 
 import json
 import pandas as pd
@@ -26,9 +26,9 @@ def build_corpus(fname_data):
 
     print('Build corpus')
     for idx, row in df.iterrows():
-        provision = Doc(tag=row['tag'], text=row['text'], normalized_text=provfunc.normalize(text=row['text']))
+        provision = Doc(tag=row['tag'], text=row['text'])
         corpus.append(provision)
-        print('\r  | Normalization: {:,d}'.format(idx+1), end='')
+
     print('\n  | Total {:,d} provisions'.format(len(corpus)))
     return corpus
 
@@ -47,8 +47,8 @@ def export_data_for_labeling(corpus):
     print('  | fdir : {}'.format(provpath.fdir_data))
     print('  | fname: {}'.format(fname_data_for_labeling))
 
-def read_labeled_data(fname_provision_labeled):
-    fpath_provision_labeled = os.path.join(provpath.fdir_data, fname_provision_labeled)
+def read_labeled_data(fname_labeled_data):
+    fpath_provision_labeled = os.path.join(provpath.fdir_data, fname_labeled_data)
     with open(fpath_provision_labeled, 'r') as f:
         labeled_data = [json.loads(line) for line in list(f)]
     return labeled_data
@@ -69,23 +69,21 @@ def assign_labels(corpus, labeled_data):
     print('  | # of corpus with labels: {:,}'.format(len(corpus_labeled)))
     return corpus_labeled
 
-def verify_labels(corpus_labeled):
+def verify_labels(corpus):
     print('============================================================')
     print('Verify labels')
 
-    for doc in corpus_labeled[:5]:
+    for doc in corpus[:5]:
         print('--------------------------------------------------')
         print('  | Tag   : {}'.format(doc.tag))
         print('  | Text  : {}...'.format(doc.text[:50]))
         print('  | Labels: {}'.format(', '.join(doc.labels)))
 
 
-
 if __name__ == '__main__':
     fname_data = 'provision.xlsx'
-    fname_corpus = 'provision.pk'
-    fname_corpus_labeled = 'provision_labeled.pk'
-    fname_provision_labeled = 'provision_labeled.jsonl'
+    fname_corpus = 'corpus.pk'
+    fname_labeled_data = 'provision_labeled.jsonl'
 
     ## Initialize corpus
     corpus = build_corpus(fname_data=fname_data)
@@ -94,7 +92,11 @@ if __name__ == '__main__':
     export_data_for_labeling(corpus=corpus)
 
     ## Assign labels
-    labeled_data = read_labeled_data(fname_provision_labeled=fname_provision_labeled)
+    labeled_data = read_labeled_data(fname_labeled_data=fname_labeled_data)
     corpus_labeled = assign_labels(corpus=corpus, labeled_data=labeled_data)
-    provfunc.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus_labeled)
-    verify_labels(corpus_labeled)
+    verify_labels(corpus=corpus_labeled)
+
+    ## Save corpus
+    print('============================================================')
+    print('Save corpus')
+    provio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)

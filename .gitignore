@@ -28,4 +28,4 @@ test*
 *.png
 *.csv
 *.h5
-*.txt
+data/*

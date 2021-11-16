@@ -55,7 +55,8 @@ def tokenize(data):
     tokenized_docs = []
     with tqdm(total=len(data)) as pbar:
         for doc in data:
-            tokenized_docs.append(TOKENIZER.tokenize(doc.text_as_input))
+            text_as_input = '[CLS] {} [SEP]'.format(doc.normalized_text)
+            tokenized_docs.append(TOKENIZER.tokenize(text_as_input))
             pbar.update(1)
 
     return tokenized_docs
@@ -276,8 +277,8 @@ if __name__ == '__main__':
     EPOCHS = 30
     LEARNING_RATE = 2e-5
 
-    ## FNAME
-    fname_corpus = 'provision_labeled.pk'
+    ## Filenames
+    fname_corpus = 'corpus_T-t_P-t_N-t_S-t_L-t.pk'
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
