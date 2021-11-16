@@ -3,12 +3,8 @@
 
 # Configuration
 import os
-import re
-import datetime
-import numpy as np
 import pickle as pk
 import pandas as pd
-from copy import deepcopy
 
 
 class ProvPath:
@@ -20,42 +16,7 @@ class ProvPath:
     fdir_result = os.path.sep.join((root, 'result'))
 
 
-class ProvFunc(ProvPath):
-    def normalize(self, text, do_lower=True, do_marking=True):
-        if do_lower:
-            text = deepcopy(text.lower())
-        else:
-            pass
-
-        if do_marking:
-            sent = text.split()
-            for i, w in enumerate(sent):
-                if re.match('www.', str(w)):
-                    sent[i] = 'URL'
-                elif re.search('\d+\d\.\d+', str(w)):
-                    sent[i] = 'REF'
-                elif re.match('\d', str(w)):
-                    sent[i] = 'NUM'
-                else:
-                    continue
-
-            text = deepcopy(' '.join(sent))
-            del sent
-        else:
-            pass
-
-        text = text.replace('?', '')
-        text = re.sub('[^ \'\?\./0-9a-zA-Zㄱ-힣\n]', '', text)
-
-        text = text.replace(' / ', '/')
-        text = re.sub('\.+\.', ' ', text)
-        text = text.replace('\\\\', '\\').replace('\\r\\n', '')
-        text = text.replace('\n', '  ')
-        text = re.sub('\. ', '  ', text)
-        text = re.sub('\s+\s', ' ', text).strip()
-
-        return text
-
+class ProvIO(ProvPath):
     def save_corpus(self, corpus, fname_corpus):
         print('============================================================')
         print('Save corpus')
@@ -71,6 +32,7 @@ class ProvFunc(ProvPath):
         fpath_corpus = os.path.join(self.fdir_corpus, fname_corpus)
         with open(fpath_corpus, 'rb') as f:
             corpus = pk.load(f)
+
         return corpus
 
     def save_result(self, result, fname_result):
@@ -85,6 +47,16 @@ class ProvFunc(ProvPath):
         print('  | fdir : {}'.format(self.fdir_result))
         print('  | fname: {}'.format(fname_result))
 
+    def argv2bool(self, argv):
+        if any((argv=='t'), (argv=='true'), (argv=='True')):
+            return True
+        elif any((argv=='f'), (argv=='false'), (argv=='False')):
+            return False
+        else:
+            print('ArgvError: Wrong argv')
+            sys.exit()
+
+class ProvFunc:
     def encode_labels_binary(self, labels, target_label):
         labels_encoded = []
         for label_list in labels:
@@ -100,4 +72,5 @@ class ProvEval:
     def flat_accuracy(self, preds, labels):
         pred_flat = np.argmax(preds, axis=1).flatten()
         labels_flat = labels.flatten()
+
         return np.sum(pred_flat == labels_flat)/len(labels_flat)
