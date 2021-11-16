@@ -8,9 +8,9 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvFunc
+from provutil import ProvPath, ProvIO
 provpath = ProvPath()
-provfunc = ProvFunc()
+provio = ProvIO()
 
 import json
 import pandas as pd
@@ -94,5 +94,9 @@ if __name__ == '__main__':
     ## Assign labels
     labeled_data = read_labeled_data(fname_labeled_data=fname_labeled_data)
     corpus_labeled = assign_labels(corpus=corpus, labeled_data=labeled_data)
-    provfunc.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
     verify_labels(corpus=corpus_labeled)
+
+    ## Save corpus
+    print('============================================================')
+    print('Save corpus')
+    provio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
