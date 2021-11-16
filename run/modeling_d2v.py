@@ -23,9 +23,11 @@ if __name__ == '__main__':
 
     ## Data preparation
     corpus = provfunc.read_corpus(fname_corpus=fname_corpus)
-    docs_preprocessed = #TODO: PoS tagging, stopword removal, lemmatization
-    docs_for_d2v = [TaggedDocument(words=doc.normalized_text.split(), tags=doc.tag) for doc in docs_preprocessed]
-    print(docs_for_d2v[0])
+    docs = [(doc.tag, doc.normalized_text) for doc in corpus]
+
+    docs_preprocessed = preprocess(docs=docs) #TODO: PoS tagging, stopword removal, lemmatization
+    # docs_for_d2v = [TaggedDocument(words=text, tags=doc.tag) for doc in docs_preprocessed]
+    # print(docs_for_d2v[0])
 
 
     ## Model development
