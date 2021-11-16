@@ -19,9 +19,6 @@ class ProvPath:
 
 class ProvIO(ProvPath):
     def save_corpus(self, corpus, fname_corpus):
-        print('============================================================')
-        print('Save corpus')
-
         fpath_corpus = os.path.sep.join((self.fdir_corpus, fname_corpus))
         with open(fpath_corpus, 'wb') as f:
             pk.dump(corpus, f)
@@ -36,12 +33,6 @@ class ProvIO(ProvPath):
 
         return corpus
 
-    def read_stopwords(self, fname_stopwords='stopwords.txt'):
-        fpath_stopwords = os.path.sep.join((self.fdir_thesaurus, fname_stopwords))
-        with open(fname_stopwords, 'r', encoding='utf-8') as f:
-            stopwords = f.read().strip()
-        return [stopword.strip() for stopword in stopwords.split('\n')]
-
     def save_result(self, result, fname_result):
         print('============================================================')
         print('Save result')
@@ -55,9 +46,9 @@ class ProvIO(ProvPath):
         print('  | fname: {}'.format(fname_result))
 
     def argv2bool(self, argv):
-        if any((argv=='t'), (argv=='true'), (argv=='True')):
+        if any(((argv=='t'), (argv=='true'), (argv=='True'))):
             return True
-        elif any((argv=='f'), (argv=='false'), (argv=='False')):
+        elif any(((argv=='f'), (argv=='false'), (argv=='False'))):
             return False
         else:
             print('ArgvError: Wrong argv')
