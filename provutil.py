@@ -12,6 +12,7 @@ class ProvPath:
 
     fdir_data = os.path.sep.join((root, 'data'))
     fdir_corpus = os.path.sep.join((root, 'corpus'))
+    fdir_thesaurus = os.path.sep.join((root, 'thesaurus'))
     fdir_model = os.path.sep.join((root, 'model'))
     fdir_result = os.path.sep.join((root, 'result'))
 
@@ -21,7 +22,7 @@ class ProvIO(ProvPath):
         print('============================================================')
         print('Save corpus')
 
-        fpath_corpus = os.path.join(self.fdir_corpus, fname_corpus)
+        fpath_corpus = os.path.sep.join((self.fdir_corpus, fname_corpus))
         with open(fpath_corpus, 'wb') as f:
             pk.dump(corpus, f)
 
@@ -29,17 +30,23 @@ class ProvIO(ProvPath):
         print('  | fname: {}'.format(fname_corpus))
 
     def read_corpus(self, fname_corpus):
-        fpath_corpus = os.path.join(self.fdir_corpus, fname_corpus)
+        fpath_corpus = os.path.sep.join((self.fdir_corpus, fname_corpus))
         with open(fpath_corpus, 'rb') as f:
             corpus = pk.load(f)
 
         return corpus
 
+    def read_stopwords(self, fname_stopwords='stopwords.txt'):
+        fpath_stopwords = os.path.sep.join((self.fdir_thesaurus, fname_stopwords))
+        with open(fname_stopwords, 'r', encoding='utf-8') as f:
+            stopwords = f.read().strip()
+        return [stopword.strip() for stopword in stopwords.split('\n')]
+
     def save_result(self, result, fname_result):
         print('============================================================')
         print('Save result')
 
-        fpath_result = os.path.join(self.fdir_result, fname_result)
+        fpath_result = os.path.sep.join((self.fdir_result, fname_result))
         writer = pd.ExcelWriter(fpath_result)
         pd.DataFrame(result).to_excel(writer, 'Sheet1')
         writer.save()
