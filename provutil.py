@@ -33,6 +33,14 @@ class ProvIO(ProvPath):
 
         return corpus
 
+    def save_model(self, model, fname_model):
+        fpath_model = os.path.sep.join((self.fdir_model, fname_model))
+        with open(fpath_model, 'wb') as f:
+            pk.dump(model, f)
+
+        print('  | fdir : {}'.format(self.fdir_model))
+        print('  | fname: {}'.format(fname_model))
+
     def save_result(self, result, fname_result):
         print('============================================================')
         print('Save result')
