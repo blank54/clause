@@ -3,6 +3,7 @@
 
 # Configuration
 import os
+import numpy as np
 import pickle as pk
 import pandas as pd
 

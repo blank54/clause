@@ -12,8 +12,9 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from clauseutil import ClausePath, ClauseFunc, ClauseEval
+from clauseutil import ClausePath, ClauseIO, ClauseFunc, ClauseEval
 clausepath = ClausePath()
+clauseio = ClauseIO()
 clausefunc = ClauseFunc()
 clauseeval = ClauseEval()
 
@@ -274,18 +275,18 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     RANDOM_STATE = 42
 
-    EPOCHS = 30
+    EPOCHS = 100
     LEARNING_RATE = 2e-5
 
     ## Filenames
-    fname_corpus = 'corpus_T-t_P-t_N-t_S-t_L-t.pk'
+    fname_corpus = 'corpus_1001_T-t_P-t_N-t_S-t_L-t.pk'
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
     test_ratio = round((1-TRAIN_TEST_RATIO)*100)
     
     ## Data preparation
-    corpus = clausefunc.read_corpus(fname_corpus=fname_corpus)
+    corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
     train, test = data_split(corpus=corpus)
     
     train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
@@ -310,5 +311,5 @@ if __name__ == '__main__':
         model_evaluation(model=model, test_dataloader=test_dataloader)
 
         ## Export result
-        fname_result = 'result_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
-        clausefunc.save_result(result=result, fname_result=fname_result)
+        fname_result = 'result_1001_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
+        clauseio.save_result(result=result, fname_result=fname_result)

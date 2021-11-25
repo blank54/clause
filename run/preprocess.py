@@ -8,10 +8,10 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvIO, ProvFunc
-provpath = ProvPath()
-provio = ProvIO()
-provfunc = ProvFunc()
+from clauseutil import ClausePath, ClauseIO, ClauseFunc
+clausepath = ClausePath()
+clauseio = ClauseIO()
+clausefunc = ClauseFunc()
 
 import re
 from tqdm import tqdm
@@ -72,7 +72,7 @@ def remove_stopword(input):
     global do_pos_tagging
 
     fname_stopwords = 'stopwords.txt'
-    fpath_stopwords = os.path.sep.join((provpath.fdir_thesaurus, fname_stopwords))
+    fpath_stopwords = os.path.sep.join((clausepath.fdir_thesaurus, fname_stopwords))
     with open(fpath_stopwords, 'r', encoding='utf-8') as f:
         stopwords = [stopword.strip() for stopword in f.read().strip().split('\n')]
 
@@ -164,22 +164,22 @@ if __name__ == '__main__':
     argv_stopword_removal = sys.argv[4]
     argv_lemmatization = sys.argv[5]
 
-    do_tokenization = provio.argv2bool(argv_tokenization)
-    do_pos_tagging = provio.argv2bool(argv_pos_tagging)
-    do_normalization = provio.argv2bool(argv_normalization)
-    do_stopword_removal = provio.argv2bool(argv_stopword_removal)
-    do_lemmatization = provio.argv2bool(argv_lemmatization)
+    do_tokenization = clauseio.argv2bool(argv_tokenization)
+    do_pos_tagging = clauseio.argv2bool(argv_pos_tagging)
+    do_normalization = clauseio.argv2bool(argv_normalization)
+    do_stopword_removal = clauseio.argv2bool(argv_stopword_removal)
+    do_lemmatization = clauseio.argv2bool(argv_lemmatization)
 
     ## Filenames
     fname_corpus = 'corpus.pk'
-    fname_corpus_preprocessed = 'corpus_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(argv_tokenization,
+    fname_corpus_preprocessed = 'corpus_1001_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(argv_tokenization,
                                                                             argv_pos_tagging,
                                                                             argv_normalization,
                                                                             argv_stopword_removal,
                                                                             argv_lemmatization)
 
     ## Data preparation
-    corpus = provio.read_corpus(fname_corpus=fname_corpus)
+    corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
 
     ## Preprocess
     corpus_preprocessed = preprocess(corpus=corpus,
@@ -205,4 +205,4 @@ if __name__ == '__main__':
     ## Save corpus
     print('============================================================')
     print('Save corpus')
-    provio.save_corpus(corpus=corpus_preprocessed, fname_corpus=fname_corpus_preprocessed)
+    clauseio.save_corpus(corpus=corpus_preprocessed, fname_corpus=fname_corpus_preprocessed)
