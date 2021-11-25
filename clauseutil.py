@@ -7,7 +7,7 @@ import pickle as pk
 import pandas as pd
 
 
-class ProvPath:
+class ClausePath:
     root = os.path.dirname(os.path.abspath(__file__))
 
     fdir_data = os.path.sep.join((root, 'data'))
@@ -17,7 +17,7 @@ class ProvPath:
     fdir_result = os.path.sep.join((root, 'result'))
 
 
-class ProvIO(ProvPath):
+class ClauseIO(ClausePath):
     def save_corpus(self, corpus, fname_corpus):
         fpath_corpus = os.path.sep.join((self.fdir_corpus, fname_corpus))
         with open(fpath_corpus, 'wb') as f:
@@ -62,7 +62,7 @@ class ProvIO(ProvPath):
             print('ArgvError: Wrong argv')
             sys.exit()
 
-class ProvFunc:
+class ClauseFunc:
     def encode_labels_binary(self, labels, target_label):
         labels_encoded = []
         for label_list in labels:
@@ -74,7 +74,7 @@ class ProvFunc:
         return labels_encoded
 
 
-class ProvEval:
+class ClauseEval:
     def flat_accuracy(self, preds, labels):
         pred_flat = np.argmax(preds, axis=1).flatten()
         labels_flat = labels.flatten()

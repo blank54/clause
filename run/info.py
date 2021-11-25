@@ -8,9 +8,10 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvFunc
-provpath = ProvPath()
-provfunc = ProvFunc()
+from clauseutil import ClausePath, ClauseIO, ClauseFunc
+clausepath = ClausePath()
+clauseio = ClauseIO()
+clausefunc = ClauseFunc()
 
 import itertools
 import pickle as pk
@@ -18,24 +19,21 @@ from collections import defaultdict
 
 
 if __name__ == '__main__':
-    fname_corpus = 'provision.pk'
-    fname_corpus_labeled = 'provision_labeled.pk'
+    fname_corpus = 'corpus.pk'
 
     print('============================================================')
     print('Corpus')
 
-    corpus = provfunc.read_corpus(fname_corpus=fname_corpus)
-    corpus_labeled = provfunc.read_corpus(fname_corpus=fname_corpus_labeled)
+    corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
     
-    print('  | # of provisions        : {:,}'.format(len(corpus)))
-    print('  | # of provisions labeled: {:,}'.format(len(corpus_labeled)))
+    print('  | # of clauses        : {:,}'.format(len(corpus)))
     print('  | # of sentences         : {:,}'.format(len(list(itertools.chain(*[p.text.split('  ') for p in corpus])))))
 
     print('============================================================')
     print('Data exploration')
 
     for target_label in ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']:
-        labels_encoded = provfunc.encode_labels_binary(labels=[p.labels for p in corpus_labeled], target_label=target_label)
+        labels_encoded = clausefunc.encode_labels_binary(labels=[p.labels for p in corpus], target_label=target_label)
 
         positive = int(sum(labels_encoded))
         negative = int(len(labels_encoded)) - positive

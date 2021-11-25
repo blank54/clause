@@ -12,10 +12,10 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvFunc, ProvEval
-provpath = ProvPath()
-provfunc = ProvFunc()
-proveval = ProvEval()
+from clauseutil import ClausePath, ClauseFunc, ClauseEval
+clausepath = ClausePath()
+clausefunc = ClauseFunc()
+clauseeval = ClauseEval()
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -84,7 +84,7 @@ def attention_masking(padded_docs):
 
 def build_dataloader(inputs, labels, masks, target_label, option):
     inputs = torch.tensor(inputs)
-    labels = torch.tensor(provfunc.encode_labels_binary(labels=labels, target_label=target_label))
+    labels = torch.tensor(clausefunc.encode_labels_binary(labels=labels, target_label=target_label))
     masks = torch.tensor(masks)
 
     data = TensorDataset(inputs, masks, labels)
@@ -210,7 +210,7 @@ def model_training(train_dataloader, valid_dataloader, result):
             logits = logits.detach().cpu().numpy()
             label_ids = b_labels.to('cpu').numpy()
 
-            tmp_valid_accuracy = proveval.flat_accuracy(logits, label_ids)
+            tmp_valid_accuracy = clauseeval.flat_accuracy(logits, label_ids)
             valid_accuracy += tmp_valid_accuracy
             nb_valid_steps += 1
 
@@ -253,7 +253,7 @@ def model_evaluation(model, test_dataloader):
         logits = logits.detach().cpu().numpy()
         label_ids = b_labels.to('cpu').numpy()
 
-        tmp_test_accuracy = proveval.flat_accuracy(logits, label_ids)
+        tmp_test_accuracy = clauseeval.flat_accuracy(logits, label_ids)
         test_accuracy += tmp_test_accuracy
         nb_test_steps += 1
 
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     test_ratio = round((1-TRAIN_TEST_RATIO)*100)
     
     ## Data preparation
-    corpus = provfunc.read_corpus(fname_corpus=fname_corpus)
+    corpus = clausefunc.read_corpus(fname_corpus=fname_corpus)
     train, test = data_split(corpus=corpus)
     
     train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
@@ -311,4 +311,4 @@ if __name__ == '__main__':
 
         ## Export result
         fname_result = 'result_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
-        provfunc.save_result(result=result, fname_result=fname_result)
+        clausefunc.save_result(result=result, fname_result=fname_result)

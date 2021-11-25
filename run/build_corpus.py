@@ -8,9 +8,9 @@ rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.
 sys.path.append(rootpath)
 
 from object import Doc
-from provutil import ProvPath, ProvIO
-provpath = ProvPath()
-provio = ProvIO()
+from clauseutil import ClausePath, ClauseIO
+clausepath = ClausePath()
+clauseio = ClauseIO()
 
 import json
 import pandas as pd
@@ -19,17 +19,17 @@ from collections import defaultdict
 
 
 def build_corpus(fname_data):
-    fpath_data = os.path.join(provpath.fdir_data, fname_data)
+    fpath_data = os.path.join(clausepath.fdir_data, fname_data)
 
     corpus = []
     df = pd.read_excel(fpath_data)
 
     print('Build corpus')
     for idx, row in df.iterrows():
-        provision = Doc(tag=row['tag'], text=row['text'])
-        corpus.append(provision)
+        clause = Doc(tag=row['tag'], text=row['text'])
+        corpus.append(clause)
 
-    print('\n  | Total {:,d} provisions'.format(len(corpus)))
+    print('\n  | Total {:,d} clauses'.format(len(corpus)))
     return corpus
 
 def export_data_for_labeling(corpus):
@@ -37,19 +37,19 @@ def export_data_for_labeling(corpus):
     for doc in corpus:
         data.append('  TAGSPLIT  '.join((doc.tag, doc.text)))
 
-    fname_data_for_labeling = 'provision_for_labeling.txt'
-    fpath_data_for_labeling = os.path.join(provpath.fdir_data, fname_data_for_labeling)
+    fname_data_for_labeling = 'clause_for_labeling.txt'
+    fpath_data_for_labeling = os.path.join(clausepath.fdir_data, fname_data_for_labeling)
     with open(fpath_data_for_labeling, 'w', encoding='utf-8') as f:
         f.write('\n'.join(data))
 
     print('============================================================')
     print('Convert corpus to data_for_labeling')
-    print('  | fdir : {}'.format(provpath.fdir_data))
+    print('  | fdir : {}'.format(clausepath.fdir_data))
     print('  | fname: {}'.format(fname_data_for_labeling))
 
 def read_labeled_data(fname_labeled_data):
-    fpath_provision_labeled = os.path.join(provpath.fdir_data, fname_labeled_data)
-    with open(fpath_provision_labeled, 'r') as f:
+    fpath_clause_labeled = os.path.join(clausepath.fdir_data, fname_labeled_data)
+    with open(fpath_clause_labeled, 'r') as f:
         labeled_data = [json.loads(line) for line in list(f)]
     return labeled_data
 
@@ -81,9 +81,9 @@ def verify_labels(corpus):
 
 
 if __name__ == '__main__':
-    fname_data = 'provision.xlsx'
+    fname_data = 'clause.xlsx'
     fname_corpus = 'corpus.pk'
-    fname_labeled_data = 'provision_labeled.jsonl'
+    fname_labeled_data = 'clause_labeled_1001.jsonl'
 
     ## Initialize corpus
     corpus = build_corpus(fname_data=fname_data)
@@ -99,4 +99,4 @@ if __name__ == '__main__':
     ## Save corpus
     print('============================================================')
     print('Save corpus')
-    provio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
+    clauseio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
