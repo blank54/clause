@@ -141,7 +141,7 @@ def gpu_allocation():
 
     return device
 
-def model_training(train_dataloader, valid_dataloader, result):
+def model_training(train_dataloader, valid_dataloader, test_dataloader):
     global RANDOM_STATE, EPOCHS, DEVICE, target_label
 
     print('------------------------------------------------------------')
@@ -170,8 +170,14 @@ def model_training(train_dataloader, valid_dataloader, result):
     for epoch in range(EPOCHS):
         train_loss = 0
         valid_loss = 0
+
         valid_accuracy = 0
         nb_valid_steps = 0
+
+        test_accuracy = 0
+        nb_test_steps = 0
+
+        result = defaultdict(list)
 
         model.train()   
         for step, batch in enumerate(train_dataloader):
@@ -215,53 +221,45 @@ def model_training(train_dataloader, valid_dataloader, result):
             valid_accuracy += tmp_valid_accuracy
             nb_valid_steps += 1
 
+        ## Test
+        model.eval()
+        for batch in test_dataloader:
+            batch = tuple(t.to(DEVICE) for t in batch)
+            b_input_ids, b_input_mask, b_labels = batch
+
+            with torch.no_grad():
+                outputs = model(b_input_ids,
+                                token_type_ids=None,
+                                attention_mask=b_input_mask)
+
+            logits = outputs[0]
+            logits = logits.detach().cpu().numpy()
+            label_ids = b_labels.to('cpu').numpy()
+
+            tmp_test_accuracy = clauseeval.flat_accuracy(logits, label_ids)
+            test_accuracy += tmp_test_accuracy
+            nb_test_steps += 1
+
+        ## Report result
+        test_accuracy = test_accuracy/nb_test_steps
+
+
         ## Report status
         avg_train_loss = train_loss/len(train_dataloader)
         avg_valid_loss = valid_loss/len(valid_dataloader)
-        current_accuracy = valid_accuracy/nb_valid_steps
+        valid_accuracy = valid_accuracy/nb_valid_steps
         
         result['target_label'].append(target_label)
         result['epoch'].append(epoch+1)
         result['train_loss'].append(avg_train_loss)
         result['valid_loss'].append(avg_valid_loss)
-        result['valid_accuracy'].append(current_accuracy)
-        log = '  | Epochs: ({}/{})   TrainLoss: {:.03f}   ValidLoss: {:.03f}   ValidAccuracy: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, current_accuracy)
+        result['valid_accuracy'].append(valid_accuracy)
+        result['test_accuracy'].append(test_accuracy)
+        log = '  | Epochs: ({}/{})   TrainLoss: {:.03f}   ValidLoss: {:.03f}   ValidAccuracy: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, valid_accuracy)
         print('\r'+log, end='')
 
     print('\n  | Training complete')
     return model, result
-
-def model_evaluation(model, test_dataloader):
-    global DEVICE
-
-    print('------------------------------------------------------------')
-    print('  | Model evaluation')
-
-    test_accuracy = 0
-    nb_test_steps = 0
-
-    model.eval()
-    for step, batch in enumerate(test_dataloader):
-        batch = tuple(t.to(DEVICE) for t in batch)
-        b_input_ids, b_input_mask, b_labels = batch
-
-        with torch.no_grad():
-            outputs = model(b_input_ids,
-                            token_type_ids=None,
-                            attention_mask=b_input_mask)
-
-        logits = outputs[0]
-        logits = logits.detach().cpu().numpy()
-        label_ids = b_labels.to('cpu').numpy()
-
-        tmp_test_accuracy = clauseeval.flat_accuracy(logits, label_ids)
-        test_accuracy += tmp_test_accuracy
-        nb_test_steps += 1
-
-    ## Report result
-    total_accuracy = test_accuracy/nb_test_steps
-    print('  | TestAccuracy: {:.03f}'.format(total_accuracy))
-    print('  | Evaluation complete')
 
 
 if __name__ == '__main__':
@@ -304,11 +302,7 @@ if __name__ == '__main__':
         test_dataloader = build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, target_label=target_label, option='test')
 
         ## Model training
-        result = defaultdict(list)
-        model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, result=result)
-
-        ## Model evaluation
-        model_evaluation(model=model, test_dataloader=test_dataloader)
+        model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, test_dataloader=test_dataloader)
 
         ## Export result
         fname_result = 'result_1001_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
