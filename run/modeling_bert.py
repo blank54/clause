@@ -166,6 +166,7 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
     torch.manual_seed(RANDOM_STATE)
     torch.cuda.manual_seed_all(RANDOM_STATE)
 
+    result = defaultdict(list)
     model.zero_grad()
     for epoch in range(EPOCHS):
         train_loss = 0
@@ -176,8 +177,6 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
 
         test_accuracy = 0
         nb_test_steps = 0
-
-        result = defaultdict(list)
 
         model.train()   
         for step, batch in enumerate(train_dataloader):
@@ -255,7 +254,7 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
         result['valid_loss'].append(avg_valid_loss)
         result['valid_accuracy'].append(valid_accuracy)
         result['test_accuracy'].append(test_accuracy)
-        log = '  | Epochs: ({}/{})   TrainLoss: {:.03f}   ValidLoss: {:.03f}   ValidAccuracy: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, valid_accuracy)
+        log = '  | Epochs: ({}/{})  TrLs: {:.03f}  VlLs: {:.03f}  VlAcc: {:.03f}  TsAcc: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, valid_accuracy, test_accuracy)
         print('\r'+log, end='')
 
     print('\n  | Training complete')
@@ -273,11 +272,11 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     RANDOM_STATE = 42
 
-    EPOCHS = 100
-    LEARNING_RATE = 2e-5
+    EPOCHS = 1000
+    LEARNING_RATE = 2e-4
 
     ## Filenames
-    fname_corpus = 'corpus_1001_T-t_P-t_N-t_S-t_L-t.pk'
+    fname_corpus = 'corpus_940_T-t_P-t_N-t_S-t_L-t.pk'
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
@@ -305,5 +304,5 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, test_dataloader=test_dataloader)
 
         ## Export result
-        fname_result = 'result_1001_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, target_label)
+        fname_result = 'result_940_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
         clauseio.save_result(result=result, fname_result=fname_result)
