@@ -171,8 +171,8 @@ if __name__ == '__main__':
     do_lemmatization = clauseio.argv2bool(argv_lemmatization)
 
     ## Filenames
-    fname_corpus = 'corpus.pk'
-    fname_corpus_preprocessed = 'corpus_1001_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(argv_tokenization,
+    fname_corpus = 'corpus_940.pk'
+    fname_corpus_preprocessed = 'corpus_940_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(argv_tokenization,
                                                                             argv_pos_tagging,
                                                                             argv_normalization,
                                                                             argv_stopword_removal,

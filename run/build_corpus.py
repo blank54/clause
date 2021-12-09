@@ -49,8 +49,15 @@ def export_data_for_labeling(corpus):
 
 def read_labeled_data(fname_labeled_data):
     fpath_clause_labeled = os.path.join(clausepath.fdir_data, fname_labeled_data)
+    labeled_data = []
     with open(fpath_clause_labeled, 'r') as f:
-        labeled_data = [json.loads(line) for line in list(f)]
+        for line in list(f):
+            data = json.loads(line)
+            if data['answer'] == 'accept':
+                labeled_data.append(data)
+            else:
+                continue
+
     return labeled_data
 
 def assign_labels(corpus, labeled_data):
@@ -89,7 +96,7 @@ if __name__ == '__main__':
     corpus = build_corpus(fname_data=fname_data)
 
     ## Export data for labeling
-    export_data_for_labeling(corpus=corpus)
+    # export_data_for_labeling(corpus=corpus)
 
     ## Assign labels
     labeled_data = read_labeled_data(fname_labeled_data=fname_labeled_data)
@@ -99,4 +106,5 @@ if __name__ == '__main__':
     ## Save corpus
     print('============================================================')
     print('Save corpus')
-    clauseio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus)
+    fname_corpus_labeled = 'corpus_{:,}.pk'.format(len(corpus_labeled))
+    clauseio.save_corpus(corpus=corpus_labeled, fname_corpus=fname_corpus_labeled)
