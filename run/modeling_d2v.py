@@ -7,8 +7,8 @@ import sys
 rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.path.sep)[:-1])
 sys.path.append(rootpath)
 
-from provutil import ProvIO
-provio = ProvIO()
+from clauseutil import ClauseIO
+clauseio = ClauseIO()
 
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
@@ -25,8 +25,8 @@ if __name__ == '__main__':
                   'dbow_words': 1}
 
     ## Filenames
-    fname_corpus = 'corpus_T-t_P-t_N-t_S-t_L-t.pk'
-    fname_model = 'd2v_V-{}_W-{}_M-{}_E-{}.pk'.format(parameters.get('vector_size'),
+    fname_corpus = 'corpus_940_T-t_P-t_N-t_S-t_L-t.pk'
+    fname_model = 'd2v_940_V-{}_W-{}_M-{}_E-{}.pk'.format(parameters.get('vector_size'),
                                                       parameters.get('window'),
                                                       parameters.get('min_count'),
                                                       parameters.get('epochs'))
@@ -35,8 +35,8 @@ if __name__ == '__main__':
     print('============================================================')
     print('Input corpus: {}'.format(fname_corpus))
 
-    corpus = provio.read_corpus(fname_corpus=fname_corpus)
-    docs = [TaggedDocument(tags=doc.tag, words=doc.lemmatized_text) for doc in corpus]
+    corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
+    docs = [TaggedDocument(tags=[doc.tag], words=doc.lemmatized_text) for doc in corpus]
     
     ## Model training
     print('============================================================')
@@ -61,4 +61,4 @@ if __name__ == '__main__':
     ## Save model
     print('============================================================')
     print('Save Doc2Vec model')
-    provio.save_model(model=d2v_model, fname_model=fname_model)
+    clauseio.save_model(model=d2v_model, fname_model=fname_model)
