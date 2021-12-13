@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     print('============================================================')
     print('BERT result summary')
-    print('  | epoch  valid_acc  test_acc')
+    print('  | label      epoch  valid_acc  test_acc')
 
     valid_accuracy_list = []
     test_accuracy_list = []
@@ -89,6 +89,6 @@ if __name__ == '__main__':
         valid_accuracy_list.append(valid_accuracy)
         test_accuracy_list.append(test_accuracy)
 
-        print('  |  {:4}      {:.03f}     {:.03f}'.format(epoch, valid_accuracy, test_accuracy))
+        print('  | {:10}  {:4}      {:.03f}     {:.03f}'.format(target_label, epoch, valid_accuracy, test_accuracy))
 
-    print('  |   AVG      {:.03f}     {:.03f}'.format(np.mean(valid_accuracy_list), np.mean(test_accuracy_list)))
+    print('  | AVERAGE               {:.03f}     {:.03f}'.format(np.mean(valid_accuracy_list), np.mean(test_accuracy_list)))
