@@ -63,7 +63,7 @@ def normalize(input, do_lower=True, do_marking=True):
     text = text.replace('\\\\', '\\').replace('\\r\\n', '')
     text = text.replace('\n', '  ')
     text = re.sub('\. ', '  ', text)
-    text = re.sub('\s+\s', ' ', text).strip()
+    text = re.sub('\s+\s', ' SENTSEP ', text).strip()
     output = text.split(' ')
 
     return output
@@ -172,11 +172,14 @@ if __name__ == '__main__':
 
     ## Filenames
     fname_corpus = 'corpus_940.pk'
-    fname_corpus_preprocessed = 'corpus_940_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(argv_tokenization,
-                                                                            argv_pos_tagging,
-                                                                            argv_normalization,
-                                                                            argv_stopword_removal,
-                                                                            argv_lemmatization)
+
+    base = '940-SENTSEP'
+    fname_corpus_preprocessed = 'corpus_{}_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(base,
+                                                                               argv_tokenization,
+                                                                               argv_pos_tagging,
+                                                                               argv_normalization,
+                                                                               argv_stopword_removal,
+                                                                               argv_lemmatization)
 
     ## Data preparation
     corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
