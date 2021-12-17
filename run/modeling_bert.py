@@ -272,7 +272,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     RANDOM_STATE = 42
 
-    EPOCHS = 10000
+    EPOCHS = 1000
     LEARNING_RATE = 2e-4
 
     ## Filenames
