@@ -81,7 +81,8 @@ if __name__ == '__main__':
     valid_accuracy_list = []
     test_accuracy_list = []
 
-    fname_result_base = 'result_940_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'
+    # fname_result_base = 'result_940_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'
+    fname_result_base = 'result_940_TR-60_VL-20_TS-20_BS-16_EP-10000_LR-0.0002_LB'
     for target_label in label_list:
         fname_result = '{}-{}.xlsx'.format(fname_result_base, target_label)
         result = clauseio.read_result(fname_result=fname_result)

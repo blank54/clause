@@ -56,7 +56,7 @@ def tokenize(data):
     tokenized_docs = []
     with tqdm(total=len(data)) as pbar:
         for doc in data:
-            text_as_input = '[CLS] {} [SEP]'.format(doc.normalized_text)
+            text_as_input = '[CLS] {} [SEP]'.format(' '.join(doc.normalized_text))
             tokenized_docs.append(TOKENIZER.tokenize(text_as_input))
             pbar.update(1)
 
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     RANDOM_STATE = 42
 
-    EPOCHS = 1000
+    EPOCHS = 10000
     LEARNING_RATE = 2e-4
 
     ## Filenames
