@@ -51,8 +51,12 @@ def get_accuracy_by_acc(result):
 
 
 if __name__ == '__main__':
-    fname_corpus = 'corpus.pk'
+    ## Filenames
+    base = '1,053'
+    fname_corpus = 'corpus_{}.pk'.format(base)
+    fname_result_base = 'result_{}_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'.format(base)
 
+    ## Status information
     print('============================================================')
     print('Corpus')
 
@@ -79,10 +83,7 @@ if __name__ == '__main__':
     print('  | label      epoch  valid_acc  test_acc')
 
     valid_accuracy_list = []
-    test_accuracy_list = []
-
-    # fname_result_base = 'result_940_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'
-    fname_result_base = 'result_940-SENTSEP-hotfix_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'
+    test_accuracy_list = []    
     for target_label in label_list:
         fname_result = '{}-{}.xlsx'.format(fname_result_base, target_label)
         result = clauseio.read_result(fname_result=fname_result)
