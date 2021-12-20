@@ -54,6 +54,11 @@ class ClauseIO(ClausePath):
         print('  | fdir : {}'.format(self.fdir_result))
         print('  | fname: {}'.format(fname_result))
 
+    def read_result(self, fname_result):
+        fpath_result = os.path.sep.join((self.fdir_result, fname_result))
+        result = pd.read_excel(fpath_result)
+        return result
+
     def argv2bool(self, argv):
         if any(((argv=='t'), (argv=='true'), (argv=='True'))):
             return True
@@ -62,6 +67,7 @@ class ClauseIO(ClausePath):
         else:
             print('ArgvError: Wrong argv')
             sys.exit()
+
 
 class ClauseFunc:
     def encode_labels_binary(self, labels, target_label):

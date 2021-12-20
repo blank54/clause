@@ -90,7 +90,7 @@ def verify_labels(corpus):
 if __name__ == '__main__':
     fname_data = 'clause.xlsx'
     fname_corpus = 'corpus.pk'
-    fname_labeled_data = 'clause_labeled_1001.jsonl'
+    fname_labeled_data = 'clause_labeled_1135.jsonl'
 
     ## Initialize corpus
     corpus = build_corpus(fname_data=fname_data)

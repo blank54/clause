@@ -56,7 +56,7 @@ def tokenize(data):
     tokenized_docs = []
     with tqdm(total=len(data)) as pbar:
         for doc in data:
-            text_as_input = '[CLS] {} [SEP]'.format(doc.normalized_text)
+            text_as_input = '[CLS] {} [SEP]'.format(' '.join(doc.normalized_text))
             tokenized_docs.append(TOKENIZER.tokenize(text_as_input))
             pbar.update(1)
 
@@ -276,7 +276,8 @@ if __name__ == '__main__':
     LEARNING_RATE = 2e-4
 
     ## Filenames
-    fname_corpus = 'corpus_940_T-t_P-t_N-t_S-t_L-t.pk'
+    base = '1,053'
+    fname_corpus = 'corpus_{}_T-t_P-t_N-t_S-t_L-t.pk'.format(base)
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
@@ -291,7 +292,8 @@ if __name__ == '__main__':
 
     ## Model development
     DEVICE = gpu_allocation()
-    for target_label in ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']:
+    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    for target_label in label_list:
         print('============================================================')
         print('Target category: <{}>'.format(target_label))
 
@@ -304,5 +306,5 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, test_dataloader=test_dataloader)
 
         ## Export result
-        fname_result = 'result_940_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
+        fname_result = 'result_{}-hotfix_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
         clauseio.save_result(result=result, fname_result=fname_result)
