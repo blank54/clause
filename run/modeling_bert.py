@@ -276,7 +276,7 @@ if __name__ == '__main__':
     LEARNING_RATE = 2e-4
 
     ## Filenames
-    base = '940-SENTSEP'
+    base = '1,053'
     fname_corpus = 'corpus_{}_T-t_P-t_N-t_S-t_L-t.pk'.format(base)
 
     train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
@@ -306,5 +306,5 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, test_dataloader=test_dataloader)
 
         ## Export result
-        fname_result = 'result_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
+        fname_result = 'result_{}-hotfix_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
         clauseio.save_result(result=result, fname_result=fname_result)

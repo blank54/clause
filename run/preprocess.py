@@ -158,11 +158,26 @@ def verify_preprocess(corpus):
 
 if __name__ == '__main__':
     ## Parameters
-    argv_tokenization = sys.argv[1]
-    argv_pos_tagging = sys.argv[2]
-    argv_normalization = sys.argv[3]
-    argv_stopword_removal = sys.argv[4]
-    argv_lemmatization = sys.argv[5]
+    try:
+        argv_tokenization = sys.argv[1]
+    except IndexError:
+        argv_tokenization = 't'
+    try:
+        argv_pos_tagging = sys.argv[2]
+    except IndexError:
+        argv_pos_tagging = 't'
+    try:
+        argv_normalization = sys.argv[3]
+    except IndexError:
+        argv_normalization = 't'
+    try:
+        argv_stopword_removal = sys.argv[4]
+    except IndexError:
+        argv_stopword_removal = 't'
+    try:
+        argv_lemmatization = sys.argv[5]
+    except IndexError:
+        argv_lemmatization = 't'
 
     do_tokenization = clauseio.argv2bool(argv_tokenization)
     do_pos_tagging = clauseio.argv2bool(argv_pos_tagging)
@@ -171,9 +186,8 @@ if __name__ == '__main__':
     do_lemmatization = clauseio.argv2bool(argv_lemmatization)
 
     ## Filenames
-    fname_corpus = 'corpus_940.pk'
-
-    base = '940-SENTSEP'
+    base = '1,053'
+    fname_corpus = 'corpus_{}.pk'.format(base)
     fname_corpus_preprocessed = 'corpus_{}_T-{}_P-{}_N-{}_S-{}_L-{}.pk'.format(base,
                                                                                argv_tokenization,
                                                                                argv_pos_tagging,
