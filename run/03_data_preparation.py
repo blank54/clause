@@ -11,21 +11,19 @@ import sys
 rootpath = os.path.sep.join(os.path.dirname(os.path.abspath(__file__)).split(os.path.sep)[:-1])
 sys.path.append(rootpath)
 
-from object import Doc
-from clauseutil import ClausePath, ClauseIO, ClauseFunc, ClauseEval
-clausepath = ClausePath()
+from clauseutil import ClauseIO, ClauseFunc
 clauseio = ClauseIO()
 clausefunc = ClauseFunc()
-clauseeval = ClauseEval()
+
+import pickle as pk
+import pandas as pd
+from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 
 from imblearn.over_sampling import SMOTE
 from transformers import BertTokenizer
-import pandas as pd
-from tqdm import tqdm
-from collections import defaultdict
 
 
 def data_split(corpus):
@@ -119,18 +117,31 @@ if __name__ == '__main__':
     base = '1,053'
     fname_corpus = 'corpus_{}_T-t_P-t_N-t_S-t_L-t.pk'.format(base)
 
-    ## Data import
+    ## Data preparation
     corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
-
-    ## Train-test split
     train, test = data_split(corpus=corpus)
     train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
     test_inputs, test_labels, test_masks = test_data_preparation(test=test)
 
     ## Resampling
+    print('============================================================')
+    print('Data resampling: SMOTE')
+
     X = pd.DataFrame(train_inputs)
     label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
     for target_label in label_list:
-        fname_train_res = 'corpus_{}_res-{}'.format(base, target_label)
+        corpus_res = {}
+        fname_resampled = 'corpus_res_{}_{}.pk'.format(base, target_label)
+        fpath_resampled = os.path.sep.join((clauseio.fdir_corpus, fname_resampled))
+
         y = clausefunc.encode_labels_binary(labels=train_labels, target_label=target_label)
-        X_res, y_res = SMOTE(random_state=RANDOM_STATE).fit_resample(X, y)
+        X_res, train_labels_res = SMOTE(random_state=RANDOM_STATE).fit_resample(X, y)
+        train_inputs_res = X_res.to_numpy()
+        train_masks_res = attention_masking(padded_docs=X_res.to_numpy())
+
+        corpus_res['train'] = (train_inputs_res, train_masks_res, train_labels_res)
+        corpus_res['valid'] = (valid_inputs, valid_masks, valid_labels)
+        corpus_res['test'] = (test_inputs, test_masks, test_labels)
+        with open(fpath_resampled, 'wb') as f:
+            pk.dump(corpus_res, f)
+        print('  | {:10}: {:5,} -> {:5,} ({})'.format(target_label, len(train_inputs), len(train_inputs_res), fname_resampled))
