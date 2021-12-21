@@ -214,7 +214,7 @@ if __name__ == '__main__':
         with open(fpath_resampled, 'rb') as f:
             corpus_res = pk.load(f)
 
-        train_inputs_res, train_masks_res, train_labels_res = corpus_res['train']
+        train_inputs_res, train_masks_res, train_labels_res = corpus_res['train_res']
         valid_inputs, valid_masks, valid_labels = corpus_res['valid']
         test_inputs, test_masks, test_labels = corpus_res['test']
 

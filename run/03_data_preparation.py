@@ -139,7 +139,8 @@ if __name__ == '__main__':
         train_inputs_res = X_res.to_numpy()
         train_masks_res = attention_masking(padded_docs=X_res.to_numpy())
 
-        corpus_res['train'] = (train_inputs_res, train_masks_res, train_labels_res)
+        corpus_res['train'] = (train_inputs, train_masks, train_labels)
+        corpus_res['train_res'] = (train_inputs_res, train_masks_res, train_labels_res)
         corpus_res['valid'] = (valid_inputs, valid_masks, valid_labels)
         corpus_res['test'] = (test_inputs, test_masks, test_labels)
         with open(fpath_resampled, 'wb') as f:
