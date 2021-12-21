@@ -114,7 +114,6 @@ def train_data_preparation(train):
 
     return train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks
 
-
 def test_data_preparation(test):
     global BATCH_SIZE
 
