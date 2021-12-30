@@ -29,6 +29,8 @@ from collections import defaultdict
 
 
 def build_dataloader(inputs, labels, masks, target_label, option, encode):
+    global BATCH_SIZE
+
     inputs = torch.tensor(inputs)    
     masks = torch.tensor(masks)
     
@@ -93,10 +95,10 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
         train_loss = 0
         valid_loss = 0
 
-        valid_accuracy = 0
+        valid_accuracy_epoch_total = 0
         nb_valid_steps = 0
 
-        test_accuracy = 0
+        test_accuracy_epoch_total = 0
         nb_test_steps = 0
 
         model.train()   
@@ -137,8 +139,8 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
             logits = logits.detach().cpu().numpy()
             label_ids = b_labels.to('cpu').numpy()
 
-            tmp_valid_accuracy = clauseeval.flat_accuracy(logits, label_ids)
-            valid_accuracy += tmp_valid_accuracy
+            valid_accuracy_batch = clauseeval.flat_accuracy(logits, label_ids)
+            valid_accuracy_epoch_total += valid_accuracy_batch
             nb_valid_steps += 1
 
         ## Test
@@ -156,26 +158,23 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
             logits = logits.detach().cpu().numpy()
             label_ids = b_labels.to('cpu').numpy()
 
-            tmp_test_accuracy = clauseeval.flat_accuracy(logits, label_ids)
-            test_accuracy += tmp_test_accuracy
+            test_accuracy_batch = clauseeval.flat_accuracy(logits, label_ids)
+            test_accuracy_epoch_total += test_accuracy_batch
             nb_test_steps += 1
-
-        ## Report result
-        test_accuracy = test_accuracy/nb_test_steps
-
 
         ## Report status
         avg_train_loss = train_loss/len(train_dataloader)
         avg_valid_loss = valid_loss/len(valid_dataloader)
-        valid_accuracy = valid_accuracy/nb_valid_steps
+        valid_accuracy_epoch = valid_accuracy_epoch_total/nb_valid_steps
+        test_accuracy_epoch = test_accuracy_epoch_total/nb_test_steps
         
         result['target_label'].append(target_label)
         result['epoch'].append(epoch+1)
         result['train_loss'].append(avg_train_loss)
         result['valid_loss'].append(avg_valid_loss)
-        result['valid_accuracy'].append(valid_accuracy)
-        result['test_accuracy'].append(test_accuracy)
-        log = '  | Epochs: ({}/{})  TrLs: {:.03f}  VlLs: {:.03f}  VlAcc: {:.03f}  TsAcc: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, valid_accuracy, test_accuracy)
+        result['valid_accuracy'].append(valid_accuracy_epoch)
+        result['test_accuracy'].append(test_accuracy_epoch)
+        log = '  | Epochs: ({}/{})  TrLs: {:.03f}  VlLs: {:.03f}  VlAcc: {:.03f}  TsAcc: {:.03f}'.format(epoch+1, EPOCHS, avg_train_loss, avg_valid_loss, valid_accuracy_epoch, test_accuracy_epoch)
         print('\r'+log, end='')
 
     print('\n  | Training complete')
@@ -183,27 +182,28 @@ def model_training(train_dataloader, valid_dataloader, test_dataloader):
 
 
 if __name__ == '__main__':
+    ## Filenames
+    base = '1,053'
+
     ## Parameters
     TRAIN_TEST_RATIO = 0.8
     TRAIN_VALID_RATIO = 0.75
+
+    train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
+    valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
+    test_ratio = round((1-TRAIN_TEST_RATIO)*100)
     
     MAX_SENT_LEN = 128
-    BATCH_SIZE = 16
+    BATCH_SIZE = 32
     RANDOM_STATE = 42
 
     EPOCHS = 1000
     LEARNING_RATE = 2e-4
 
-    ## Filenames
-    base = '1,053'
-
-    # train_ratio = round(TRAIN_TEST_RATIO*TRAIN_VALID_RATIO*100)
-    # valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
-    # test_ratio = round((1-TRAIN_TEST_RATIO)*100)
-    
     ## Model development
     DEVICE = gpu_allocation()
     label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    # label_list = ['DEFINITION', 'SCOPE']
     for target_label in label_list:
         print('============================================================')
         print('Target category: <{}>'.format(target_label))
@@ -227,5 +227,5 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader, test_dataloader=test_dataloader)
 
         ## Export result
-        fname_result = 'result_{}-hotfix_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
+        fname_result = 'result_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
         clauseio.save_result(result=result, fname_result=fname_result)
