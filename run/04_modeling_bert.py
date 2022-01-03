@@ -191,8 +191,9 @@ if __name__ == '__main__':
     valid_ratio = round(TRAIN_TEST_RATIO*(1-TRAIN_VALID_RATIO)*100)
     test_ratio = round((1-TRAIN_TEST_RATIO)*100)
     
+    RESAMPLING = False
     MAX_SENT_LEN = 128
-    BATCH_SIZE = 4
+    BATCH_SIZE = 8
     RANDOM_STATE = 42
 
     EPOCHS = 1000
@@ -213,12 +214,17 @@ if __name__ == '__main__':
         with open(fpath_resampled, 'rb') as f:
             corpus_res = pk.load(f)
 
-        train_inputs_res, train_masks_res, train_labels_res = corpus_res['train_res']
+        if RESAMPLING:
+            train_inputs, train_masks, train_labels = corpus_res['train_res']
+            train_dataloader = build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, target_label=target_label, encode=False)
+        else:
+            train_inputs, train_masks, train_labels = corpus_res['train']
+            train_dataloader = build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, target_label=target_label, encode=True)
         valid_inputs, valid_masks, valid_labels = corpus_res['valid']
         test_inputs, test_masks, test_labels = corpus_res['test']
 
         ## Build dataloader
-        train_dataloader = build_dataloader(inputs=train_inputs_res, labels=train_labels_res, masks=train_masks_res, target_label=target_label, encode=False)
+        
         valid_dataloader = build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, target_label=target_label, encode=True)
         test_dataloader = build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, target_label=target_label, encode=True)
 
@@ -226,7 +232,7 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader)
 
         ## Export training result
-        fname_train_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_LB-{}_train.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label)
+        fname_train_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_LB-{}_train.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label, RESAMPLING)
         clauseio.save_result(result=result, fname_result=fname_train_result)
 
         ## Model testing
@@ -234,5 +240,5 @@ if __name__ == '__main__':
         test_result[target_label].append(test_accuracy)
 
     ## Export testing result
-    fname_test_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_test.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE)
+    fname_test_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_RS-{}_LR-{}_test.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING)
     clauseio.save_result(result=result, fname_result=fname_test_result)
