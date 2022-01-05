@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from imblearn.over_sampling import SMOTE
 
 
 def data_import(base):
@@ -49,8 +50,9 @@ if __name__ == '__main__':
     base = '1,053'
     
     ## Parameters
-    TRAIN_VALID_RATIO = 0.7
+    TRAIN_VALID_RATIO = 0.6
     RANDOM_STATE = 42
+    RESAMPLING = True
 
     ## Data import
     corpus, d2v_model = data_import(base=base)
@@ -64,6 +66,11 @@ if __name__ == '__main__':
     for target_label in label_list:
         target_labels = clausefunc.encode_labels_binary(labels=labels, target_label=target_label)
         train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(vectors, target_labels, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+
+        if RESAMPLING:
+            train_inputs, train_labels = SMOTE(random_state=RANDOM_STATE).fit_resample(train_inputs, train_labels)
+        else:
+            pass
 
         classifier = svm.SVC(kernel='linear')
         classifier.fit(train_inputs, train_labels)
