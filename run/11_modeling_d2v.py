@@ -25,11 +25,13 @@ if __name__ == '__main__':
                   'dbow_words': 1}
 
     ## Filenames
-    fname_corpus = 'corpus_940_T-t_P-t_N-t_S-t_L-t.pk'
-    fname_model = 'd2v_940_V-{}_W-{}_M-{}_E-{}.pk'.format(parameters.get('vector_size'),
-                                                      parameters.get('window'),
-                                                      parameters.get('min_count'),
-                                                      parameters.get('epochs'))
+    base = '1,053'
+    fname_corpus = 'corpus_{}_T-t_P-t_N-t_S-t_L-t.pk'.format(base)
+    fname_model = 'd2v_{}_V-{}_W-{}_M-{}_E-{}.pk'.format(base,
+                                                         parameters.get('vector_size'),
+                                                         parameters.get('window'),
+                                                         parameters.get('min_count'),
+                                                         parameters.get('epochs'))
 
     ## Data preparation
     print('============================================================')

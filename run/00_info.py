@@ -65,6 +65,7 @@ if __name__ == '__main__':
     print('  | # of clauses  : {:,}'.format(len(corpus)))
     print('  | # of sentences: {:,}'.format(len(list(itertools.chain(*[p.text.split('  ') for p in corpus])))))
 
+
     print('============================================================')
     print('Data exploration')
     print('  | label       positive  negative')
@@ -76,7 +77,33 @@ if __name__ == '__main__':
         positive = int(sum(labels_encoded))
         negative = int(len(labels_encoded)) - positive
 
-        print('  | {:10}:     {:4,}      {:4,}'.format(target_label, positive, negative))
+        print('  | {:10}:    {:5,}     {:5,}'.format(target_label, positive, negative))
+
+
+    print('============================================================')
+    print('Data resampling on training dataset')
+    print('  |             Before resampling           After resampling')
+    print('  | label       positive  negative          positive  negative')
+
+    for target_label in label_list:
+        fname_resampled = 'corpus_res_{}_{}.pk'.format(base, target_label)
+        fpath_resampled = os.path.sep.join((clauseio.fdir_corpus, fname_resampled))
+        with open(fpath_resampled, 'rb') as f:
+            corpus_res = pk.load(f)
+
+        train_inputs, train_masks, train_labels = corpus_res['train']
+        train_inputs_res, train_masks_res, train_labels_res = corpus_res['train_res']
+
+        total = len(train_labels)
+        pos = sum(clausefunc.encode_labels_binary(train_labels, target_label=target_label))
+        neg = total - pos
+
+        total_res = len(train_labels_res)
+        pos_res = sum(train_labels_res)
+        neg_res = total_res - pos_res
+
+        print('  | {:10}:    {:5,}     {:5,} ({:,}) ->    {:5,}     {:5,} ({:,})'.format(target_label, pos, neg, total, pos_res, neg_res, total_res))
+
 
     print('============================================================')
     print('BERT result summary')
