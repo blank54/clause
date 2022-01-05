@@ -196,7 +196,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 8
     RANDOM_STATE = 42
 
-    EPOCHS = 1000
+    EPOCHS = 100
     LEARNING_RATE = 2e-4
 
     ## Model development
