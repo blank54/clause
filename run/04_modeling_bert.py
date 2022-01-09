@@ -183,16 +183,16 @@ if __name__ == '__main__':
 
         if RESAMPLING:
             train_inputs, train_masks, train_labels = corpus_res['train_res']
-            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=False)
+            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=False)
             valid_inputs, valid_masks, valid_labels = corpus_res['valid_res']
-            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=False)
+            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=False)
             test_inputs, test_masks, test_labels = corpus_res['test_res']
             test_dataloader = clausefunc.build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=False)
         else:
             train_inputs, train_masks, train_labels = corpus_res['train']
-            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=True)
+            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=True)
             valid_inputs, valid_masks, valid_labels = corpus_res['valid']
-            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=True)
+            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=True)
             test_inputs, test_masks, test_labels = corpus_res['test']
             test_dataloader = clausefunc.build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=True)
 
