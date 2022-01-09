@@ -18,8 +18,6 @@ clausefunc = ClauseFunc()
 clauseeval = ClauseEval()
 
 import torch
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler
-
 from transformers import BertForSequenceClassification, AdamW
 from transformers import get_linear_schedule_with_warmup
 
@@ -29,39 +27,6 @@ import pickle as pk
 from collections import defaultdict
 from sklearn.metrics import accuracy_score
 
-
-def build_dataloader(inputs, labels, masks, target_label, encode):
-    global BATCH_SIZE
-
-    inputs = torch.tensor(inputs)    
-    masks = torch.tensor(masks)
-    
-    if encode:
-        labels = torch.tensor(clausefunc.encode_labels_binary(labels=labels, target_label=target_label))
-    else:
-        labels = torch.tensor(labels)
-
-    data = TensorDataset(inputs, masks, labels)
-    sampler = RandomSampler(data)
-
-    return DataLoader(data, sampler=sampler, batch_size=BATCH_SIZE)
-
-def gpu_allocation():
-    print('============================================================')
-    print('GPU allocation')
-
-    os.environ['CUDA_DEVICE_ORDER']='PCI_BUS_ID'
-    os.environ['CUDA_VISIBLE_DEVICES']= '2'
-
-    if torch.cuda.is_available():    
-        device = torch.device('cuda')
-        print('  | There are {} GPU(s) available.'.format(torch.cuda.device_count()))
-        print('  | Current CUDA device: {}'.format(torch.cuda.current_device()))
-    else:
-        device = torch.device('cpu')
-        print('  | No GPU available, using the CPU instead.')
-
-    return device
 
 def model_training(train_dataloader, valid_dataloader):
     global RANDOM_STATE, EPOCHS, DEVICE, target_label
@@ -200,10 +165,12 @@ if __name__ == '__main__':
     LEARNING_RATE = 2e-4
 
     ## Model development
-    DEVICE = gpu_allocation()
+    DEVICE = clausefunc.gpu_allocation()
     test_result = defaultdict(list)
 
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    # label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
+    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE']
+    # label_list = ['PAYMENT']
     for target_label in label_list:
         print('============================================================')
         print('Target category: <{}>'.format(target_label))
@@ -216,29 +183,34 @@ if __name__ == '__main__':
 
         if RESAMPLING:
             train_inputs, train_masks, train_labels = corpus_res['train_res']
-            train_dataloader = build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, target_label=target_label, encode=False)
+            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=False)
+            valid_inputs, valid_masks, valid_labels = corpus_res['valid_res']
+            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=False)
+            test_inputs, test_masks, test_labels = corpus_res['test_res']
+            test_dataloader = clausefunc.build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=False)
         else:
             train_inputs, train_masks, train_labels = corpus_res['train']
-            train_dataloader = build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_masks, target_label=target_label, encode=True)
-        valid_inputs, valid_masks, valid_labels = corpus_res['valid']
-        test_inputs, test_masks, test_labels = corpus_res['test']
-
-        ## Build dataloader
-        
-        valid_dataloader = build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_masks, target_label=target_label, encode=True)
-        test_dataloader = build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, target_label=target_label, encode=True)
+            train_dataloader = clausefunc.build_dataloader(inputs=train_inputs, labels=train_labels, masks=train_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=True)
+            valid_inputs, valid_masks, valid_labels = corpus_res['valid']
+            valid_dataloader = clausefunc.build_dataloader(inputs=valid_inputs, labels=valid_labels, masks=valid_mask batch_size=BATCH_SIZE,s, target_label=target_label, encode=True)
+            test_inputs, test_masks, test_labels = corpus_res['test']
+            test_dataloader = clausefunc.build_dataloader(inputs=test_inputs, labels=test_labels, masks=test_masks, batch_size=BATCH_SIZE, target_label=target_label, encode=True)
 
         ## Model training
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader)
 
         ## Export training result
-        fname_train_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_LB-{}_train.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, target_label, RESAMPLING)
-        clauseio.save_result(result=result, fname_result=fname_train_result)
+        model_info = '{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_LB-{}'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING, target_label)
+        fname_model = 'result-bert3_{}.pk'.format(model_info)
+        fname_train_result = 'result-bert3_{}_train.xlsx'.format(model_info)
+        
+        clauseio.save_model(model=model, fname_model=fname_model)
+        # clauseio.save_result(result=result, fname_result=fname_train_result)
 
         ## Model testing
         test_accuracy = model_testing(model=model, test_dataloader=test_dataloader)
         test_result[target_label].append(test_accuracy)
 
     ## Export testing result
-    fname_test_result = 'result-bert2_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_RS-{}_LR-{}_test.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING)
-    clauseio.save_result(result=result, fname_result=fname_test_result)
+    fname_test_result = 'result-bert3_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_test.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING)
+    # clauseio.save_result(result=test_result, fname_result=fname_test_result)

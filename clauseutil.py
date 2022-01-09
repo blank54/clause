@@ -7,6 +7,9 @@ import numpy as np
 import pickle as pk
 import pandas as pd
 
+import torch
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler
+
 
 class ClausePath:
     root = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +44,12 @@ class ClauseIO(ClausePath):
 
         print('  | fdir : {}'.format(self.fdir_model))
         print('  | fname: {}'.format(fname_model))
+
+    def read_model(self, fname_model):
+        fpath_model = os.path.sep.join((self.fdir_model, fname_model))
+        with open(fpath_model, 'rb') as f:
+            model = pk.load(f)
+        return model
 
     def save_result(self, result, fname_result):
         print('============================================================')
@@ -79,6 +88,38 @@ class ClauseFunc:
                 labels_encoded.append(0)
 
         return labels_encoded
+
+    def build_dataloader(self, inputs, labels, masks, batch_size, target_label, encode):
+        inputs = torch.tensor(inputs)    
+        masks = torch.tensor(masks)
+        
+        if encode:
+            labels = torch.tensor(self.encode_labels_binary(labels=labels, target_label=target_label))
+        else:
+            labels = torch.tensor(labels)
+
+        data = TensorDataset(inputs, masks, labels)
+        sampler = RandomSampler(data)
+
+        return DataLoader(data, sampler=sampler, batch_size=batch_size)
+
+    def gpu_allocation(self):
+        print('============================================================')
+        print('GPU allocation')
+
+        os.environ['CUDA_DEVICE_ORDER']='PCI_BUS_ID'
+        os.environ['CUDA_VISIBLE_DEVICES']= '0'
+
+        if torch.cuda.is_available():    
+            device = torch.device('cuda')
+            print('  | There are {} GPU(s) available.'.format(torch.cuda.device_count()))
+            print('  | Current CUDA device: {}'.format(torch.cuda.current_device()))
+        else:
+            device = torch.device('cpu')
+            print('  | No GPU available, using the CPU instead.')
+
+        return device
+
 
 
 class ClauseEval:

@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ## Parameters
     TRAIN_VALID_RATIO = 0.6
     RANDOM_STATE = 42
-    RESAMPLING = True
+    RESAMPLING = False
 
     ## Data import
     corpus, d2v_model = data_import(base=base)
@@ -62,15 +62,17 @@ if __name__ == '__main__':
     print('SVM model accuracy')
 
     vectors, labels = data_preparation(corpus=corpus, d2v_model=d2v_model)
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
     for target_label in label_list:
         target_labels = clausefunc.encode_labels_binary(labels=labels, target_label=target_label)
-        train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(vectors, target_labels, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
 
         if RESAMPLING:
-            train_inputs, train_labels = SMOTE(random_state=RANDOM_STATE).fit_resample(train_inputs, train_labels)
+            target_vectors, target_labels = SMOTE(random_state=RANDOM_STATE).fit_resample(vectors, target_labels)
         else:
+            target_vectors = vectors
             pass
+
+        train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(target_vectors, target_labels, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
 
         classifier = svm.SVC(kernel='linear')
         classifier.fit(train_inputs, train_labels)

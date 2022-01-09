@@ -70,7 +70,7 @@ if __name__ == '__main__':
     print('Data exploration')
     print('  | label       positive  negative')
 
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
     for target_label in label_list:
         labels_encoded = clausefunc.encode_labels_binary(labels=[p.labels for p in corpus], target_label=target_label)
 
@@ -93,13 +93,20 @@ if __name__ == '__main__':
 
         train_inputs, train_masks, train_labels = corpus_res['train']
         train_inputs_res, train_masks_res, train_labels_res = corpus_res['train_res']
+        valid_inputs, valid_masks, valid_labels = corpus_res['valid']
+        valid_inputs_res, valid_masks_res, valid_labels_res = corpus_res['valid_res']
+        test_inputs, test_masks, test_labels = corpus_res['test']
+        test_inputs_res, test_masks_res, test_labels_res = corpus_res['test_res']
 
-        total = len(train_labels)
-        pos = sum(clausefunc.encode_labels_binary(train_labels, target_label=target_label))
+        full_labels = train_labels+valid_labels+test_labels
+        full_labels_res = train_labels_res+valid_labels_res+test_labels_res
+        
+        total = len(full_labels)
+        pos = sum(clausefunc.encode_labels_binary(full_labels, target_label=target_label))
         neg = total - pos
 
-        total_res = len(train_labels_res)
-        pos_res = sum(train_labels_res)
+        total_res = len(full_labels_res)
+        pos_res = sum(full_labels_res)
         neg_res = total_res - pos_res
 
         print('  | {:10}:    {:5,}     {:5,} ({:,}) ->    {:5,}     {:5,} ({:,})'.format(target_label, pos, neg, total, pos_res, neg_res, total_res))

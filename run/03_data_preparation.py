@@ -41,33 +41,6 @@ def data_split(corpus):
 
     return train, test
 
-def train_data_preparation(train):
-    global TRAIN_VALID_RATIO, RANDOM_STATE, BATCH_SIZE
-
-    print('============================================================')
-    print('Train data preparation')
-
-    train_tokenized = tokenize(data=train)
-    train_padded = padding(tokenized_docs=train_tokenized)
-    train_attention_masks = attention_masking(padded_docs=train_padded)
-
-    train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(train_padded, [d.labels for d in train], random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
-    train_masks, valid_masks, _, _ = train_test_split(train_attention_masks, train_padded, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
-
-    return train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks
-
-def test_data_preparation(test):
-    global BATCH_SIZE
-
-    print('============================================================')
-    print('Test data preparation')
-
-    test_tokenized = tokenize(data=test)
-    test_padded = padding(tokenized_docs=test_tokenized)
-    test_attention_masks = attention_masking(padded_docs=test_padded)
-
-    return test_padded, [d.labels for d in test], test_attention_masks
-
 def tokenize(data):
     global TOKENIZER
 
@@ -101,6 +74,53 @@ def attention_masking(padded_docs):
 
     return attention_masks
 
+def data_preparation(corpus):
+    corpus_tokenized = tokenize(data=corpus)
+    inputs = padding(tokenized_docs=corpus_tokenized)
+    masks = attention_masking(padded_docs=inputs)
+    labels = [d.labels for d in corpus]
+
+    return inputs, masks, labels
+
+
+
+
+# def train_data_preparation(train):
+#     global TRAIN_VALID_RATIO, RANDOM_STATE, BATCH_SIZE
+
+#     print('============================================================')
+#     print('Train data preparation')
+
+#     train_tokenized = tokenize(data=train)
+#     train_padded = padding(tokenized_docs=train_tokenized)
+#     train_attention_masks = attention_masking(padded_docs=train_padded)
+
+#     train_inputs, valid_inputs, train_labels, valid_labels = train_test_split(train_padded, [d.labels for d in train], random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+#     train_masks, valid_masks, _, _ = train_test_split(train_attention_masks, train_padded, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+
+#     return train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks
+
+# def test_data_preparation(test):
+#     global BATCH_SIZE
+
+#     print('============================================================')
+#     print('Test data preparation')
+
+#     test_tokenized = tokenize(data=test)
+#     test_padded = padding(tokenized_docs=test_tokenized)
+#     test_attention_masks = attention_masking(padded_docs=test_padded)
+
+#     return test_padded, [d.labels for d in test], test_attention_masks
+
+
+
+def resample(inputs, labels, target_label):
+    labels_encoded = clausefunc.encode_labels_binary(labels=labels, target_label=target_label)
+    inputs_res, labels_res = SMOTE(random_state=RANDOM_STATE).fit_resample(inputs, labels_encoded)
+    # inputs_res = inputs_res.to_numpy()
+    masks_res = attention_masking(padded_docs=inputs_res)
+    return inputs_res, masks_res, labels_res
+
 
 if __name__ == '__main__':
     ## Parameters
@@ -119,30 +139,37 @@ if __name__ == '__main__':
 
     ## Data preparation
     corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
-    train, test = data_split(corpus=corpus)
-    train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
-    test_inputs, test_labels, test_masks = test_data_preparation(test=test)
+    inputs, masks, labels = data_preparation(corpus=corpus)
+
+    # train, test = data_split(corpus=corpus)
+    # train_inputs, train_labels, train_masks, valid_inputs, valid_labels, valid_masks = train_data_preparation(train=train)
+    # test_inputs, test_labels, test_masks = test_data_preparation(test=test)
 
     ## Resampling
     print('============================================================')
     print('Data resampling: SMOTE')
 
-    X = pd.DataFrame(train_inputs)
     label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
     for target_label in label_list:
+        train_inputs, test_inputs, train_masks, test_masks, train_labels, test_labels = train_test_split(inputs, masks, labels, random_state=RANDOM_STATE, train_size=TRAIN_TEST_RATIO)
+        train_inputs, valid_inputs, train_masks, valid_masks, train_labels, valid_labels = train_test_split(train_inputs, train_masks, train_labels, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+
+        inputs_res, masks_res, labels_res = resample(inputs=inputs, labels=labels, target_label=target_label)
+        train_inputs_res, test_inputs_res, train_masks_res, test_masks_res, train_labels_res, test_labels_res = train_test_split(inputs_res, masks_res, labels_res, random_state=RANDOM_STATE, train_size=TRAIN_TEST_RATIO)
+        train_inputs_res, valid_inputs_res, train_masks_res, valid_masks_res, train_labels_res, valid_labels_res = train_test_split(train_inputs_res, train_masks_res, train_labels_res, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)
+
         corpus_res = {}
         fname_resampled = 'corpus_res_{}_{}.pk'.format(base, target_label)
         fpath_resampled = os.path.sep.join((clauseio.fdir_corpus, fname_resampled))
 
-        y = clausefunc.encode_labels_binary(labels=train_labels, target_label=target_label)
-        X_res, train_labels_res = SMOTE(random_state=RANDOM_STATE).fit_resample(X, y)
-        train_inputs_res = X_res.to_numpy()
-        train_masks_res = attention_masking(padded_docs=X_res.to_numpy())
-
         corpus_res['train'] = (train_inputs, train_masks, train_labels)
-        corpus_res['train_res'] = (train_inputs_res, train_masks_res, train_labels_res)
         corpus_res['valid'] = (valid_inputs, valid_masks, valid_labels)
         corpus_res['test'] = (test_inputs, test_masks, test_labels)
+        corpus_res['train_res'] = (train_inputs_res, train_masks_res, train_labels_res)
+        corpus_res['valid_res'] = (valid_inputs_res, valid_masks_res, valid_labels_res)
+        corpus_res['test_res'] = (test_inputs_res, test_masks_res, test_labels_res)
+
         with open(fpath_resampled, 'wb') as f:
             pk.dump(corpus_res, f)
-        print('  | {:10}: {:5,} -> {:5,} ({})'.format(target_label, len(train_inputs), len(train_inputs_res), fname_resampled))
+        
+        print('  | {:10}: {:5,} / {:5,} / {:5,} ({})'.format(target_label, len(train_inputs_res), len(valid_inputs_res), len(test_inputs_res), fname_resampled))
