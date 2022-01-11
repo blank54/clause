@@ -20,13 +20,13 @@ clauseeval = ClauseEval()
 import torch
 from transformers import BertForSequenceClassification, AdamW
 from transformers import get_linear_schedule_with_warmup
+from transformers import BertTokenizer
 
 import random
 import numpy as np
 import pickle as pk
 from collections import defaultdict
-from sklearn.metrics import accuracy_score
-
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 def model_training(train_dataloader, valid_dataloader):
     global RANDOM_STATE, EPOCHS, DEVICE, target_label
@@ -118,12 +118,15 @@ def model_training(train_dataloader, valid_dataloader):
     print('\n  | Training complete')
     return model, result
 
-def model_testing(model, test_dataloader):
+def model_testing(model, test_dataloader, model_info, target_label):
+    global TOKENIZER
+    
     print('------------------------------------------------------------')
     print('  | Model testing')
 
     model.eval()
     test_accuracy = 0
+    preds = defaultdict(list)
 
     for batch in test_dataloader:
         batch = tuple(t.to(DEVICE) for t in batch)
@@ -137,6 +140,15 @@ def model_testing(model, test_dataloader):
         pred = [torch.argmax(logit).cpu().detach().item() for logit in outputs.logits]
         true = [label for label in b_labels.cpu().numpy()]
         test_accuracy += accuracy_score(true, pred)
+        for ids, p, t in zip(b_input_ids, pred, true):
+            preds['text'].append(TOKENIZER.decode(ids))
+            preds['pred'].append(p)
+            preds['true'].append(t)
+
+    ## Confusion matrix
+    conf_matrix = confusion_matrix(preds['true'], preds['pred'])
+    fname_conf_matrix = 'conf_matrix-bert_{}_LB-{}.xlsx'.format(model_info, target_label)
+    clauseio.save_result(result=conf_matrix, fname_result=fname_conf_matrix)
 
     # Report status
     avg_test_accuracy = test_accuracy/len(test_dataloader)
@@ -145,9 +157,6 @@ def model_testing(model, test_dataloader):
 
 
 if __name__ == '__main__':
-    ## Filenames
-    base = '1,053'
-
     ## Parameters
     TRAIN_TEST_RATIO = 0.8
     TRAIN_VALID_RATIO = 0.75
@@ -164,13 +173,29 @@ if __name__ == '__main__':
     EPOCHS = 100
     LEARNING_RATE = 2e-4
 
+    ## Filenames
+    base = '1,053'
+    version = '3.1'
+    model_info = 'V-{}_D-{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}'.format(version,
+                                                                              base, 
+                                                                              train_ratio, 
+                                                                              valid_ratio, 
+                                                                              test_ratio, 
+                                                                              BATCH_SIZE, 
+                                                                              EPOCHS, 
+                                                                              LEARNING_RATE, 
+                                                                              RESAMPLING)
+
+    ## Tokenizer
+    TOKENIZER = BertTokenizer.from_pretrained('bert-base-multilingual-cased', do_lower_case=True)
+
     ## Model development
     DEVICE = clausefunc.gpu_allocation()
     test_result = defaultdict(list)
 
     # label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE']
-    # label_list = ['PAYMENT']
+    # label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE']
+    label_list = ['RnR']
     for target_label in label_list:
         print('============================================================')
         print('Target category: <{}>'.format(target_label))
@@ -200,17 +225,16 @@ if __name__ == '__main__':
         model, result = model_training(train_dataloader=train_dataloader, valid_dataloader=valid_dataloader)
 
         ## Export training result
-        model_info = '{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_LB-{}'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING, target_label)
-        fname_model = 'result-bert3_{}.pk'.format(model_info)
-        fname_train_result = 'result-bert3_{}_train.xlsx'.format(model_info)
+        fname_model = 'bert_{}_LB-{}.pk'.format(model_info, target_label)
+        fname_train_result = 'result-bert_{}_LB-{}_train.xlsx'.format(model_info, target_label)
         
         clauseio.save_model(model=model, fname_model=fname_model)
-        # clauseio.save_result(result=result, fname_result=fname_train_result)
+        clauseio.save_result(result=result, fname_result=fname_train_result)
 
         ## Model testing
-        test_accuracy = model_testing(model=model, test_dataloader=test_dataloader)
+        test_accuracy = model_testing(model=model, test_dataloader=test_dataloader, model_info=model_info, target_label=target_label)
         test_result[target_label].append(test_accuracy)
 
     ## Export testing result
-    fname_test_result = 'result-bert3_{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}_test.xlsx'.format(base, train_ratio, valid_ratio, test_ratio, BATCH_SIZE, EPOCHS, LEARNING_RATE, RESAMPLING)
-    # clauseio.save_result(result=test_result, fname_result=fname_test_result)
+    fname_test_result = 'result-bert_{}_test.xlsx'.format(model_info)
+    clauseio.save_result(result=test_result, fname_result=fname_test_result)
