@@ -25,9 +25,11 @@ def build_corpus(fname_data):
     df = pd.read_excel(fpath_data)
 
     print('Build corpus')
-    for idx, row in df.iterrows():
-        clause = Doc(tag=row['tag'], text=row['text'])
-        corpus.append(clause)
+    for _, row in df.iterrows():
+        for idx, sent in enumerate(row['text'].split('  ')):
+            tag = '{}_{:02d}'.format(row['tag'], idx+1)
+            clause = Doc(tag=tag, text=sent)
+            corpus.append(clause)
 
     print('\n  | Total {:,d} clauses'.format(len(corpus)))
     return corpus
@@ -37,7 +39,7 @@ def export_data_for_labeling(corpus):
     for doc in corpus:
         data.append('  TAGSPLIT  '.join((doc.tag, doc.text)))
 
-    fname_data_for_labeling = 'clause_for_labeling.txt'
+    fname_data_for_labeling = 'sent_for_labeling.txt'
     fpath_data_for_labeling = os.path.join(clausepath.fdir_data, fname_data_for_labeling)
     with open(fpath_data_for_labeling, 'w', encoding='utf-8') as f:
         f.write('\n'.join(data))
@@ -90,13 +92,13 @@ def verify_labels(corpus):
 if __name__ == '__main__':
     fname_data = 'clause.xlsx'
     fname_corpus = 'corpus.pk'
-    fname_labeled_data = 'clause_labeled_1135.jsonl'
+    fname_labeled_data = 'sent_labeled_2000.jsonl'
 
     ## Initialize corpus
     corpus = build_corpus(fname_data=fname_data)
 
     ## Export data for labeling
-    # export_data_for_labeling(corpus=corpus)
+    export_data_for_labeling(corpus=corpus)
 
     ## Assign labels
     labeled_data = read_labeled_data(fname_labeled_data=fname_labeled_data)
