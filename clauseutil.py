@@ -77,6 +77,12 @@ class ClauseIO(ClausePath):
             print('ArgvError: Wrong argv')
             sys.exit()
 
+    def read_label_list(self, version):
+        fname_label_list = 'label_list_{}.txt'.format(version)
+        fpath_label_list = os.path.sep.join((self.fdir_corpus, fname_label_list))
+        with open(fpath_label_list, 'r', encoding='utf-8') as f:
+            return [l.strip() for l in f.read().strip().split('\n')]
+
 
 class ClauseFunc:
     def encode_labels_binary(self, labels, target_label):

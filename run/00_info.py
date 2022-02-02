@@ -52,9 +52,11 @@ def get_accuracy_by_acc(result):
 
 if __name__ == '__main__':
     ## Filenames
-    base = '1,053'
+    base = '1,976'
+    label_list_version = 'v2'
     fname_corpus = 'corpus_{}.pk'.format(base)
     fname_result_base = 'result_{}_TR-60_VL-20_TS-20_BS-16_EP-1000_LR-0.0002_LB'.format(base)
+    label_list = clauseio.read_label_list(version=label_list_version)
 
     ## Status information
     print('============================================================')
@@ -70,7 +72,7 @@ if __name__ == '__main__':
     print('Data exploration')
     print('  | label       positive  negative')
 
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
+    
     for target_label in label_list:
         labels_encoded = clausefunc.encode_labels_binary(labels=[p.labels for p in corpus], target_label=target_label)
 
