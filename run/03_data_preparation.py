@@ -134,7 +134,7 @@ if __name__ == '__main__':
     RANDOM_STATE = 42
 
     ## Filenames
-    base = '1,053'
+    base = '1,976'
     fname_corpus = 'corpus_{}_T-t_P-t_N-t_S-t_L-t.pk'.format(base)
 
     ## Data preparation
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     print('============================================================')
     print('Data resampling: SMOTE')
 
-    label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'RnR', 'DEFINITION', 'SCOPE']
+    label_list = clauseio.read_label_list(version='v2')
     for target_label in label_list:
         train_inputs, test_inputs, train_masks, test_masks, train_labels, test_labels = train_test_split(inputs, masks, labels, random_state=RANDOM_STATE, train_size=TRAIN_TEST_RATIO)
         train_inputs, valid_inputs, train_masks, valid_masks, train_labels, valid_labels = train_test_split(train_inputs, train_masks, train_labels, random_state=RANDOM_STATE, train_size=TRAIN_VALID_RATIO)

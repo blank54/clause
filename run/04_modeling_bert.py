@@ -167,16 +167,16 @@ if __name__ == '__main__':
     
     RESAMPLING = False
     MAX_SENT_LEN = 128
-    BATCH_SIZE = 8
+    BATCH_SIZE = 16
     RANDOM_STATE = 42
 
     EPOCHS = 100
     LEARNING_RATE = 2e-4
 
     ## Filenames
-    base = '1,053'
-    version = '3.1'
-    model_info = 'V-{}_D-{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}'.format(version,
+    base = '1,976'
+    model_version = '4.0.1'
+    model_info = 'V-{}_D-{}_TR-{}_VL-{}_TS-{}_BS-{}_EP-{}_LR-{}_RS-{}'.format(model_version,
                                                                               base, 
                                                                               train_ratio, 
                                                                               valid_ratio, 
@@ -193,9 +193,7 @@ if __name__ == '__main__':
     DEVICE = clausefunc.gpu_allocation()
     test_result = defaultdict(list)
 
-    # label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE', 'RnR']
-    # label_list = ['PAYMENT', 'TEMPORAL', 'METHOD', 'QUALITY', 'SAFETY', 'DEFINITION', 'SCOPE']
-    label_list = ['RnR']
+    label_list = clauseio.read_label_list(version='v2')
     for target_label in label_list:
         print('============================================================')
         print('Target category: <{}>'.format(target_label))
