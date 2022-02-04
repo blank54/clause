@@ -52,9 +52,6 @@ class ClauseIO(ClausePath):
         return model
 
     def save_result(self, result, fname_result):
-        print('============================================================')
-        print('Save result')
-
         fpath_result = os.path.sep.join((self.fdir_result, fname_result))
         writer = pd.ExcelWriter(fpath_result)
         pd.DataFrame(result).to_excel(writer, 'Sheet1')
@@ -95,12 +92,31 @@ class ClauseFunc:
 
         return labels_encoded
 
-    def build_dataloader(self, inputs, labels, masks, batch_size, target_label, encode):
+    def encode_labels_multi(self, labels, label_list):
+        labels_encoded = []
+        for label in labels:
+            label_code = '0000000000'
+            label_code = list(label_code)
+            for l in label:
+                label_code[label_list.index(l)] = '1'
+                
+            label_code = ''.join(label_code)
+            label_value = sum(int(e)*(2**i) for i, e in enumerate(list(label_code)))
+            labels_encoded.append(label_value)
+
+        return labels_encoded
+
+    def build_dataloader(self, inputs, labels, masks, batch_size, encode, **kwargs):
+        target_label = kwargs.get('target_label')
+
         inputs = torch.tensor(inputs)    
         masks = torch.tensor(masks)
         
-        if encode:
+        if encode == 'binary':
             labels = torch.tensor(self.encode_labels_binary(labels=labels, target_label=target_label))
+        elif encode == 'multi':
+            label_list = ClauseIO().read_label_list(version='v2')
+            labels = torch.tensor(self.encode_labels_multi(labels=labels, label_list=label_list))
         else:
             labels = torch.tensor(labels)
 
