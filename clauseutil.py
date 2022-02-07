@@ -126,9 +126,6 @@ class ClauseFunc:
         return DataLoader(data, sampler=sampler, batch_size=batch_size)
 
     def gpu_allocation(self):
-        print('============================================================')
-        print('GPU allocation')
-
         os.environ['CUDA_DEVICE_ORDER']='PCI_BUS_ID'
         os.environ['CUDA_VISIBLE_DEVICES']= '0'
 
