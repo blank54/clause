@@ -35,11 +35,20 @@ os.environ['CUDA_DEVICE_ORDER']='PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 
+def fdir(label_name, option, **kwargs):
+    sampling = kwargs.get('sampling', '')
+
+    if sampling:
+        return os.path.sep.join((clausepath.fdir_data, sampling, label_name, option))
+    else:
+        return os.path.sep.join((clausepath.fdir_data, label_name, option))
+
+
 def load_dataset(label_name):
     global AUTOTUNE, BATCH_SIZE, TRAIN_VALID_RATIO, RANDOM_STATE
 
     raw_train_ds = tf.keras.utils.text_dataset_from_directory(
-        os.path.sep.join((clausepath.fdir_data, label_name, 'train')),
+        fdir(label_name=label_name, option='train', sampling='downsampled'),
         batch_size=BATCH_SIZE,
         validation_split=(1-TRAIN_VALID_RATIO),
         subset='training',
@@ -48,7 +57,7 @@ def load_dataset(label_name):
     train_ds = raw_train_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
     valid_ds = tf.keras.utils.text_dataset_from_directory(
-        os.path.sep.join((clausepath.fdir_data, label_name, 'train')),
+        fdir(label_name=label_name, option='train', sampling='downsampled'),
         batch_size=BATCH_SIZE,
         validation_split=(1-TRAIN_VALID_RATIO),
         subset='validation',
@@ -56,7 +65,7 @@ def load_dataset(label_name):
     valid_ds = valid_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
     test_ds = tf.keras.utils.text_dataset_from_directory(
-        os.path.sep.join((clausepath.fdir_data, label_name, 'test')),
+        fdir(label_name=label_name, option='test', sampling='downsampled'),
         batch_size=BATCH_SIZE)
     test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
@@ -184,7 +193,7 @@ if __name__ == '__main__':
         BATCH_SIZE = 16
         TRAIN_VALID_RATIO = 0.75
         ACTIVATION = 'relu'
-        EPOCHS = 100
+        EPOCHS = 10
         LEARNING_RATE = 3e-4
 
         print(f'  | Label name: {LABEL_NAME}')
@@ -192,7 +201,7 @@ if __name__ == '__main__':
 
         ## Filenames
         base = '1,976'
-        version = '5.0.1'
+        version = '5.0.3'
         model_info = f'V-{version}_D-{base}_BS-{BATCH_SIZE}_EP-{EPOCHS}_LR-{LEARNING_RATE}_LB-{LABEL_NAME}'
 
         ## Device setting
