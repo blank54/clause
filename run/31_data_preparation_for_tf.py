@@ -14,6 +14,13 @@ clausepath = ClausePath()
 from sklearn.model_selection import train_test_split
 
 
+def make_directories(label_list):
+    for label_name in label_list:
+        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'pos')), exist_ok=True)
+        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'neg')), exist_ok=True)
+        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'test', 'pos')), exist_ok=True)
+        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'test', 'neg')), exist_ok=True)
+
 def save_doc_here(fdir, fname):
     fpath = os.path.sep.join((fdir, fname))
     with open(fpath, 'w', encoding='utf-8') as f:
@@ -41,11 +48,7 @@ if __name__ == '__main__':
 
     ## Directory
     label_list = clauseio.read_label_list(version='v2')
-    for label_name in label_list:
-        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'pos')), exist_ok=True)
-        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'neg')), exist_ok=True)
-        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'test', 'pos')), exist_ok=True)
-        os.makedirs(os.path.sep.join((clausepath.fdir_data, label_name, 'test', 'neg')), exist_ok=True)
+    make_directories(label_list=label_list)
 
     ## Dataset
     corpus = clauseio.read_corpus(fname_corpus=fname_corpus)
