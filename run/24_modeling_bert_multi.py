@@ -194,7 +194,7 @@ if __name__ == '__main__':
     
     # MAX_SENT_LEN = 128
     # BATCH_SIZE = 16
-    # EPOCHS = 100
+    EPOCHS = 100
     # LEARNING_RATE = 2e-4
 
     accuracies = defaultdict(list)
