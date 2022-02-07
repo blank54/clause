@@ -74,9 +74,9 @@ def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder):
     net = tf.keras.layers.Dropout(0.1)(net)
 
     # Additional layers
-    net = tr.keras.layers.Dense(64, activation=ACTIVATION)(net)
+    net = tf.keras.layers.Dense(64, activation=ACTIVATION)(net)
     net = tf.keras.layers.Dropout(0.1)(net)
-    net = tr.keras.layers.Dense(32, activation=ACTIVATION)(net)
+    net = tf.keras.layers.Dense(32, activation=ACTIVATION)(net)
     net = tf.keras.layers.Dropout(0.1)(net)
 
     net = tf.keras.layers.Dense(1, activation=ACTIVATION, name='classifier')(net)
@@ -238,11 +238,12 @@ if __name__ == '__main__':
         y_pred = reloaded_model.predict(test_ds)
         precision, recall, f1 = evaluate(y_pred, test_ds)
 
-        print(f'  | Loss     : {loss:.03f}')
-        print(f'  | Accuracy : {accuracy:.03f}')
-        print(f'  | Precision: {precision:.03f}')
-        print(f'  | Recall   : {recall:.03f}')
-        print(f'  | F1 score : {f1:.03f}')
+        print(f'  | Label name: {LABEL_NAME}')
+        print(f'  | Loss      : {loss:.03f}')
+        print(f'  | Accuracy  : {accuracy:.03f}')
+        print(f'  | Precision : {precision:.03f}')
+        print(f'  | Recall    : {recall:.03f}')
+        print(f'  | F1 score  : {f1:.03f}')
 
         ## Results
         results['label'].append(LABEL_NAME)
