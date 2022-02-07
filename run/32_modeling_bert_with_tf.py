@@ -72,6 +72,13 @@ def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder):
     outputs = encoder(encoder_inputs)
     net = outputs['pooled_output']
     net = tf.keras.layers.Dropout(0.1)(net)
+
+    # Additional layers
+    net = tr.keras.layers.Dense(64, activation=ACTIVATION)(net)
+    net = tf.keras.layers.Dropout(0.1)(net)
+    net = tr.keras.layers.Dense(32, activation=ACTIVATION)(net)
+    net = tf.keras.layers.Dropout(0.1)(net)
+
     net = tf.keras.layers.Dense(1, activation=ACTIVATION, name='classifier')(net)
 
     return tf.keras.Model(text_input, net)
