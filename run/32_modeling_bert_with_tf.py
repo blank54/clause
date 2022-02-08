@@ -26,6 +26,7 @@ import tensorflow_hub as hub
 import tensorflow_text as text
 from official.nlp import optimization
 
+from sklearn.metrics import precision_score, recall_score, confusion_matrix, f1_score
 import matplotlib.pyplot as plt
 
 tf.get_logger().setLevel('ERROR')
@@ -38,7 +39,7 @@ os.environ['CUDA_VISIBLE_DEVICES']='0'
 def fdir(label_name, option, **kwargs):
     sampling = kwargs.get('sampling', '')
 
-    if sampling:
+    if all([(option == 'train'), sampling]):
         return os.path.sep.join((clausepath.fdir_data, sampling, label_name, option))
     else:
         return os.path.sep.join((clausepath.fdir_data, label_name, option))
@@ -71,8 +72,8 @@ def load_dataset(label_name):
 
     return train_ds, valid_ds, test_ds, class_names
 
-def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder):
-    global ACTIVATION
+def build_model(tfhub_handle_preprocess, tfhub_handle_encoder):
+    global ACTIVATION_hidden, ACTIVATION_output
 
     text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
     preprocessing_layer = hub.KerasLayer(tfhub_handle_preprocess, name='preprocessing')
@@ -82,17 +83,17 @@ def build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder):
     net = outputs['pooled_output']
     net = tf.keras.layers.Dropout(0.1)(net)
 
-    # Additional layers
-    net = tf.keras.layers.Dense(64, activation=ACTIVATION)(net)
+    ## Additional layers
+    net = tf.keras.layers.Dense(64, activation=ACTIVATION_hidden)(net)
     net = tf.keras.layers.Dropout(0.1)(net)
-    net = tf.keras.layers.Dense(32, activation=ACTIVATION)(net)
+    net = tf.keras.layers.Dense(32, activation=ACTIVATION_hidden)(net)
     net = tf.keras.layers.Dropout(0.1)(net)
 
-    net = tf.keras.layers.Dense(1, activation=ACTIVATION, name='classifier')(net)
+    net = tf.keras.layers.Dense(1, activation=ACTIVATION_output, name='classifier')(net)
 
     return tf.keras.Model(text_input, net)
 
-def load_model(bert_model_name):
+def model_identification(bert_model_name):
     map_name_to_handle = {
         'bert_en_cased_L-12_H-768_A-12':
             'https://tfhub.dev/tensorflow/bert_en_cased_L-12_H-768_A-12/3',
@@ -109,16 +110,12 @@ def load_model(bert_model_name):
 
     tfhub_handle_preprocess = map_model_to_preprocess[bert_model_name]
     tfhub_handle_encoder = map_name_to_handle[bert_model_name]
-    classifier_model = build_classifier_model(tfhub_handle_preprocess, tfhub_handle_encoder)
+    model = build_model(tfhub_handle_preprocess, tfhub_handle_encoder)
 
-    return classifier_model
+    return model
 
 def train(train_ds, valid_ds):
     global BERT_MODEL_NAME, EPOCHS, LEARNING_RATE
-
-    classifier_model = load_model(bert_model_name=BERT_MODEL_NAME)
-    loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-    metrics = tf.metrics.BinaryAccuracy()
 
     steps_per_epoch = tf.data.experimental.cardinality(train_ds).numpy()
     num_train_steps = steps_per_epoch * EPOCHS
@@ -130,140 +127,131 @@ def train(train_ds, valid_ds):
                                               num_warmup_steps=num_warmup_steps,
                                               optimizer_type='adamw')
 
+    classifier_model = model_identification(bert_model_name=BERT_MODEL_NAME)
     classifier_model.compile(optimizer=optimizer,
-                  loss=loss,
-                  metrics=metrics)
+                             loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+                             metrics=['accuracy'])
 
     with tf.device('/device:GPU:2'):
         history = classifier_model.fit(x=train_ds,
-                            validation_data=valid_ds,
-                            epochs=EPOCHS)
+                                       validation_data=valid_ds,
+                                       epochs=EPOCHS)
 
     return classifier_model, history
 
-def evaluate(y_pred, test_ds):
+def get_labels(ds):
     y_labels = []
-    for batch, labels in test_ds:
+    for batch, labels in ds:
         y_labels.extend([l.numpy() for l in labels])
+    return y_labels
 
-    tp, fp, tn, fn = 0, 0, 0, 0
-    for p, a in zip(y_pred, y_labels):
-        if p>0:
-            if a == 1:
-                tp += 1
-            else:
-                fp += 1
+def get_preds(model, ds):
+    y_preds = []
+    for pred in model.predict(ds):
+        if pred >= 0.5:
+            y_preds.append(1)
         else:
-            if a == 1:
-                fn += 1
-            else:
-                tn += 1
-
-    try:
-        precision = tp / (tp+fp)
-    except ZeroDivisionError:
-        precision = 0
-
-    try:
-        recall = tp / (tp+tn)
-    except ZeroDivisionError:
-        recall = 0
-
-    try:
-        f1 = 2 / ((1/precision)+(1/recall))
-    except ZeroDivisionError:
-        f1 = 0
-
-    return precision, recall, f1
+            y_preds.append(0)
+    return y_preds
 
 
 if __name__ == '__main__':
-    results = defaultdict(list)
-    label_list = clauseio.read_label_list(version='v2')
-    for LABEL_NAME in label_list:
-        ## Parameters
-        print('============================================================')
-        print('Running information')
+    for BATCH_SIZE in [8, 16]:
+        for LEARNING_RATE in [2e-5, 3e-5, 2e-4]:
+            results = defaultdict(list)
+            label_list = clauseio.read_label_list(version='v2')
+            for LABEL_NAME in label_list:
+                ## Parameters
+                print('============================================================')
+                print('Running information')
 
-        AUTOTUNE = tf.data.AUTOTUNE
-        # BERT_MODEL_NAME = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
-        BERT_MODEL_NAME = 'bert_en_cased_L-12_H-768_A-12'
+                AUTOTUNE = tf.data.AUTOTUNE
+                # BERT_MODEL_NAME = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
+                BERT_MODEL_NAME = 'bert_en_cased_L-12_H-768_A-12'
 
-        RANDOM_STATE = 42
-        BATCH_SIZE = 16
-        TRAIN_VALID_RATIO = 0.75
-        ACTIVATION = 'relu'
-        EPOCHS = 10
-        LEARNING_RATE = 3e-4
+                RANDOM_STATE = 42
+                TRAIN_VALID_RATIO = 0.75
+                EPOCHS = 10
 
-        print(f'  | Label name: {LABEL_NAME}')
-        print(f'  | BERT model: {BERT_MODEL_NAME}')
+                BATCH_SIZE = 16
+                ACTIVATION_hidden = 'relu'
+                ACTIVATION_output = 'sigmoid'
+                # LEARNING_RATE = 2e-5
 
-        ## Filenames
-        base = '1,976'
-        version = '5.0.3'
-        model_info = f'V-{version}_D-{base}_BS-{BATCH_SIZE}_EP-{EPOCHS}_LR-{LEARNING_RATE}_LB-{LABEL_NAME}'
+                print(f'  | Label name: {LABEL_NAME}')
+                print(f'  | BERT model: {BERT_MODEL_NAME}')
 
-        ## Device setting
-        print('============================================================')
-        print('GPU allocation')
+                ## Filenames
+                base = '1,976'
+                model_version = '5.2.0'
+                model_info = f'V-{model_version}_D-{base}_BS-{BATCH_SIZE}_EP-{EPOCHS}_LR-{LEARNING_RATE}'
 
-        DEVICE = clausefunc.gpu_allocation()
+                ## Device setting
+                print('============================================================')
+                print('GPU allocation')
 
-        ## Model train
-        print('============================================================')
-        print('Main')
+                DEVICE = clausefunc.gpu_allocation()
 
-        print('--------------------------------------------------')
-        print('  | Load dataset')
+                ## Model train
+                print('============================================================')
+                print('Main')
 
-        train_ds, valid_ds, test_ds, class_names = load_dataset(label_name=LABEL_NAME)
+                print('--------------------------------------------------')
+                print('  | Load dataset')
 
-        print('--------------------------------------------------')
-        print('  | Model training')
+                train_ds, valid_ds, test_ds, class_names = load_dataset(label_name=LABEL_NAME)
 
-        classifier_model, history = train(train_ds=train_ds, valid_ds=valid_ds)
-        loss, accuracy = classifier_model.evaluate(test_ds)
+                print('--------------------------------------------------')
+                print('  | Model training')
 
-        ## Save & load
-        print('============================================================')
-        print('Save and load model')
+                classifier_model, history = train(train_ds=train_ds, valid_ds=valid_ds)
+                loss, accuracy = classifier_model.evaluate(test_ds)
 
-        print('--------------------------------------------------')
+                ## Save & load
+                print('============================================================')
+                print('Save and load model')
 
-        fname_bert_weights = f'bert_weights-{model_info}.h5'
-        fpath_bert_weights = os.path.sep.join((clausepath.fdir_model, fname_bert_weights))
-        classifier_model.save(fpath_bert_weights, include_optimizer=False)
+                print('--------------------------------------------------')
 
-        reloaded_model = load_model(bert_model_name=BERT_MODEL_NAME)
-        reloaded_model.load_weights(fpath_bert_weights)
+                fname_bert_weights = f'bert_weights-{model_info}_LB-{LABEL_NAME}.h5'
+                fpath_bert_weights = os.path.sep.join((clausepath.fdir_model, fname_bert_weights))
+                classifier_model.save(fpath_bert_weights, include_optimizer=False)
 
-        print(f'  | Save model weights: {fname_bert_weights}')
+                reloaded_model = model_identification(bert_model_name=BERT_MODEL_NAME)
+                reloaded_model.load_weights(fpath_bert_weights)
 
-        ## Evaluate
-        print('============================================================')
-        print('Evaluation')
-        
-        y_pred = reloaded_model.predict(test_ds)
-        precision, recall, f1 = evaluate(y_pred, test_ds)
+                print(f'  | Save model weights: {fname_bert_weights}')
 
-        print(f'  | Label name: {LABEL_NAME}')
-        print(f'  | Loss      : {loss:.03f}')
-        print(f'  | Accuracy  : {accuracy:.03f}')
-        print(f'  | Precision : {precision:.03f}')
-        print(f'  | Recall    : {recall:.03f}')
-        print(f'  | F1 score  : {f1:.03f}')
+                ## Evaluate
+                print('============================================================')
+                print('Evaluation')
+                
+                y_pred = get_preds(model=reloaded_model, ds=test_ds)
+                y_labels = get_labels(ds=test_ds)
 
-        ## Results
-        results['label'].append(LABEL_NAME)
-        results['loss'].append(loss)
-        results['accuracy'].append(accuracy)
-        results['precision'].append(precision)
-        results['recall'].append(recall)
-        results['f1'].append(f1)
+                confusion = confusion_matrix(y_labels, y_pred)
+                precision = precision_score(y_labels, y_pred)
+                recall = recall_score(y_labels, y_pred)
+                f1 = f1_score(y_labels, y_pred)
 
-    print('============================================================')
-    print('Save results')
+                print(f'  | Label name: {LABEL_NAME}')
+                print(f'  | Loss      : {loss:.03f}')
+                print(f'  | Accuracy  : {accuracy:.03f}')
+                print(f'  | Precision : {precision:.03f}')
+                print(f'  | Recall    : {recall:.03f}')
+                print(f'  | F1 score  : {f1:.03f}')
+                print(f'  | Confusion : {confusion}')
 
-    fname_result = f'result_{version}'
-    clauseio.save_result(result, fname_result)
+                ## Results
+                results['label'].append(LABEL_NAME)
+                results['loss'].append(loss)
+                results['accuracy'].append(accuracy)
+                results['precision'].append(precision)
+                results['recall'].append(recall)
+                results['f1'].append(f1)
+
+            print('============================================================')
+            print('Save results')
+
+            fname_result = f'result_{model_version}.xlsx'
+            clauseio.save_result(results, fname_result)

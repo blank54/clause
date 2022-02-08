@@ -52,13 +52,12 @@ def down_sampling(label_name):
 def save_downsampled_data(flist, option):
     with tqdm(total=len(flist)) as pbar:
         for fname in flist:
-            fpath_origin = os.path.sep.join((clausepath.fdir_data, label_name, 'train', option, fname))
-            fpath_destin = os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', option, fname))
-        
-            shutil.copy(fpath_origin, fpath_destin)
+            fpath_tr_origin = os.path.sep.join((clausepath.fdir_data, label_name, 'train', option, fname))
+            fpath_tr_destin = os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', option, fname))
+
+            shutil.copy(fpath_tr_origin, fpath_tr_destin)
             pbar.update(1)
 
-    # print(f'  | {option} in downsampled data: {len(os.listdir(os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', option))))}')
 
 if __name__ == '__main__':
     ## Filenames

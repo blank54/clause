@@ -1,0 +1,2 @@
+model_checkpoint_path: "bert-V-5.0.0_D-1,976_BS-16_EP-1_LR-3e-05_LB-PAYMENT"
+all_model_checkpoint_paths: "bert-V-5.0.0_D-1,976_BS-16_EP-1_LR-3e-05_LB-PAYMENT"
