@@ -17,21 +17,21 @@ from tqdm import tqdm
 
 
 def make_directories(label_name):
-    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', 'pos')), exist_ok=True)
-    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', 'neg')), exist_ok=True)
-    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'test', 'pos')), exist_ok=True)
-    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'test', 'neg')), exist_ok=True)
+    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampling', label_name, 'train', 'pos')), exist_ok=True)
+    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampling', label_name, 'train', 'neg')), exist_ok=True)
+    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampling', label_name, 'test', 'pos')), exist_ok=True)
+    os.makedirs(os.path.sep.join((clausepath.fdir_data, 'downsampling', label_name, 'test', 'neg')), exist_ok=True)
 
 def down_sampling(label_name):
-    fdir_tr_pos = os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'pos'))
-    fdir_tr_neg = os.path.sep.join((clausepath.fdir_data, label_name, 'train', 'neg'))
+    fdir_tr_pos = os.path.sep.join((clausepath.fdir_data, 'default', label_name, 'train', 'pos'))
+    fdir_tr_neg = os.path.sep.join((clausepath.fdir_data, 'default', label_name, 'train', 'neg'))
 
     flist_tr_pos = os.listdir(fdir_tr_pos)
     flist_tr_neg = os.listdir(fdir_tr_neg)
 
     cnt_pos = len(flist_tr_pos)
     cnt_neg = len(flist_tr_neg)
-    cnt_pivot = int(min(cnt_pos, cnt_neg)*SAMPLING_RATIO)
+    cnt_pivot = min(int(min(cnt_pos, cnt_neg)*SAMPLING_RATIO), max(cnt_pos, cnt_neg))
 
     try:
         flist_pos = random.sample(flist_tr_pos, cnt_pivot)
@@ -52,8 +52,8 @@ def down_sampling(label_name):
 def save_downsampled_data(flist, option):
     with tqdm(total=len(flist)) as pbar:
         for fname in flist:
-            fpath_tr_origin = os.path.sep.join((clausepath.fdir_data, label_name, 'train', option, fname))
-            fpath_tr_destin = os.path.sep.join((clausepath.fdir_data, 'downsampled', label_name, 'train', option, fname))
+            fpath_tr_origin = os.path.sep.join((clausepath.fdir_data, 'default', label_name, 'train', option, fname))
+            fpath_tr_destin = os.path.sep.join((clausepath.fdir_data, 'downsampling', label_name, 'train', option, fname))
 
             shutil.copy(fpath_tr_origin, fpath_tr_destin)
             pbar.update(1)
@@ -63,10 +63,13 @@ if __name__ == '__main__':
     ## Filenames
     base = '1,976'
 
+    label_version_small = 'v2'
+    label_version_large = 'v6'
+
     ## Parameters
     SAMPLING_RATIO = 1.5
 
-    label_list = clauseio.read_label_list(version='v2')
+    label_list = clauseio.read_label_list(version=label_version_large)
     for label_name in label_list:
         print('============================================================')
         print(f'Downsampling on [{label_name}]')
