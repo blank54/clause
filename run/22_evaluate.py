@@ -111,13 +111,13 @@ if __name__ == '__main__':
     print('--------------------------------------------------')
     print('Load model')
 
-    for model_version in ['5.4.0b', '5.4.1b']:
+    for model_version in ['6.0.0', '6.0.1']:
         parameters = clausemodel.set_parameters(model_version=model_version)
         results = defaultdict(dict)
 
-        label_list = clauseio.read_label_list(version='v6')
-        # for LABEL_NAME in label_list:
-        for LABEL_NAME in ['PROCEDURE', 'RnR', 'DEFINITION']:
+        label_list = clauseio.read_label_list(version='v7')
+        for LABEL_NAME in label_list:
+        # for LABEL_NAME in ['DEFINITION']:
             print(f'  | Label name: {LABEL_NAME}')
 
             try:

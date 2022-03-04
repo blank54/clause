@@ -21,27 +21,26 @@ def revise_corpus(corpus, corpus_sheet_revised, LABEL_NAME):
     revisions = []
 
     for doc in corpus:
-        doc2 = deepcopy(doc)
-        if doc2.tag not in list(corpus_sheet_revised['tag']):
-            corpus_revised.append(doc2)
+        if doc.tag not in list(corpus_sheet_revised['tag']):
+            pass
 
         else:
-            revised_label = int(corpus_sheet_revised.loc[corpus_sheet_revised['tag']==doc2.tag,'label'])
-            if LABEL_NAME in doc2.labels:
+            revised_label = int(corpus_sheet_revised.loc[corpus_sheet_revised['tag']==doc.tag,'label'])
+            if LABEL_NAME in doc.labels:
                 if revised_label == 1:
                     pass
                 else:
-                    doc2.labels.pop(LABEL_NAME)
-                    revisions.append(doc2.tag)
+                    doc.labels = deepcopy([l for l in doc.labels if l != LABEL_NAME])
+                    revisions.append(doc.tag)
             else:
                 if revised_label == 1:
-                    doc2.labels.append(LABEL_NAME)   
-                    revisions.append(doc2.tag)
+                    doc.labels.append(LABEL_NAME)   
+                    revisions.append(doc.tag)
                 else:
                     pass
 
-            doc2.labels = list(set(doc2.labels))
-            corpus_revised.append(doc2)
+        doc.labels = list(set(doc.labels))
+        corpus_revised.append(doc)
 
     return corpus_revised, revisions
 
@@ -81,7 +80,7 @@ if __name__ == '__main__':
         try:
             fname_corpus_sheet = f'corpus_for_review_{LABEL_NAME}_revised.xlsx'
             corpus_sheet_revised = clauseio.read_corpus_sheet(fname=fname_corpus_sheet)
-            corpus, revisions = deepcopy(revise_corpus(corpus, corpus_sheet_revised, LABEL_NAME))
+            corpus_revised, revisions = revise_corpus(corpus, corpus_sheet_revised, LABEL_NAME)
 
             # show_revisions(corpus, corpus_revised, revisions)
             print(f'  | revised docs: {len(revisions):,}')
