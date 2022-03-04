@@ -55,6 +55,19 @@ def normalize(input, do_lower=True, do_marking=False):
         pass
 
     text = ' '.join(sent)
+    if do_marking:
+        text = text.replace('table NUM', 'TABLE')
+        text = text.replace('aldot NUM', 'REF')
+        text = text.replace('bs NUM', 'REF')
+        text = text.replace('bs en NUM', 'REF')
+        text = text.replace('bs en iso NUM', 'REF')
+        text = text.replace('en NUM', 'REF')
+        text = text.replace('en iso NUM', 'REF')
+        text = text.replace('iso NUM', 'REF')
+        text = text.replace('part NUM', 'REF')
+        text = text.replace('section NUM', 'REF')
+        text = text.replace('appendix NUM', 'REF')
+
     text = text.replace('?', '')
     text = re.sub('[^ \'\?\./0-9a-zA-Zㄱ-힣\n]', '', text)
 

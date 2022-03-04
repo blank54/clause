@@ -60,7 +60,7 @@ def train(LABEL_NAME, parameters, fpath_model_checkpoint):
                              metrics=['accuracy'])
 
     ## Callbacks
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=15, mode='min')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, mode='min')
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=fpath_model_checkpoint,
                                                           monitor='val_loss',
                                                           mode='min',
@@ -90,12 +90,12 @@ def save_model(model, history, fpath_bert_weights, fpath_bert_history):
 
 
 if __name__ == '__main__':
-    for model_version in ['5.4.0b', '5.4.1b']:
+    for model_version in ['6.0.0']:
         parameters = clausemodel.set_parameters(model_version=model_version)
 
-        label_list = clauseio.read_label_list(version='v6')
-        # for LABEL_NAME in label_list:
-        for LABEL_NAME in ['PROCEDURE', 'RnR', 'DEFINITION']:
+        label_list = clauseio.read_label_list(version='v7')
+        for LABEL_NAME in label_list:
+        # for LABEL_NAME in ['DEFINITION']:
             ## Initialize
             model_info, fpath_bert_weights, fpath_model_checkpoint, fpath_bert_history = clauseio.set_bert_filenames(LABEL_NAME, parameters)
 

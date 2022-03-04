@@ -34,10 +34,10 @@ os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 def load(parameters, fpath_bert_weights, LABEL_NAME):
     bert_preprocess, bert_encoder = clausemodel.bert_model_identification(bert_model_name=parameters.get('BERT_MODEL_NAME'))
-    reloaded_model = clausemodel.build_bert_model(ACTIVATION_hidden=parameters.get('ACTIVATION_hidden'),
-                                                  ACTIVATION_output=parameters.get('ACTIVATION_output'),
+    reloaded_model = clausemodel.build_bert_model(ACTIVATION=parameters.get('ACTIVATION'),
                                                   tfhub_handle_preprocess=bert_preprocess,
-                                                  tfhub_handle_encoder=bert_encoder)
+                                                  tfhub_handle_encoder=bert_encoder,
+                                                  additional=False)
     reloaded_model.load_weights(fpath_bert_weights)
 
     _, _, test_ds, _ = clauseio.load_bert_dataset(LABEL_NAME, parameters)
@@ -78,24 +78,24 @@ if __name__ == '__main__':
     print('--------------------------------------------------')
     print('Load corpus')
 
-    fname_corpus = 'corpus_revised.pk'
+    fname_corpus = 'corpus_sampled.pk'
     fname_corpus_selected = 'corpus_selected.pk'
-
-    corpus = clauseio.read_corpus(fname_corpus)
-
-    print('  | # of docs: {:,}'.format(len(corpus)))
 
     ## Model
     print('--------------------------------------------------')
     print('Load model')
 
-    model_version = '5.3.0a'
+    model_version = '5.4.1s'
     parameters = clausemodel.set_parameters(model_version=model_version)
 
     target_tags = {}
-    label_list = clauseio.read_label_list(version='v6')
+    # label_list = clauseio.read_label_list(version='v6')
+    label_list = ['CONDITION']
     for LABEL_NAME in label_list:
-        model_info, fpath_bert_weights, fpath_bert_history = clauseio.set_bert_filenames(LABEL_NAME, parameters)
+        corpus = clauseio.read_corpus(fname_corpus)[LABEL_NAME]
+        print('  | # of docs: {:,}'.format(len(corpus)))
+
+        model_info, fpath_bert_weights, fpath_model_checkpoint, fpath_bert_history = clauseio.set_bert_filenames(LABEL_NAME, parameters)
         reloaded_model, test_ds = load(parameters, fpath_bert_weights, LABEL_NAME)
         y_pred, y_labels, y_texts = predict(reloaded_model, test_ds)
 

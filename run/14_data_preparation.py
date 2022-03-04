@@ -21,8 +21,12 @@ def make_directories(LABEL_NAME):
 
 def save_doc_here(fdir, fname, doc):
     fpath = os.path.sep.join((fdir, fname))
-    with open(fpath, 'w', encoding='utf-8') as f:
-        f.write(' '.join(doc.normalized_text))
+    try:
+        with open(fpath, 'x', encoding='utf-8') as f:
+            f.write(' '.join([w for w in doc.normalized_text if w != 'SENTSEP']))
+    except FileExistsError:
+        with open(fpath.replace('.txt', '2.txt'), 'w', encoding='utf-8') as f:
+            f.write(' '.join([w for w in doc.normalized_text if w != 'SENTSEP']))
 
 def build_dataset(corpus, option, LABEL_NAME):
     for doc in corpus:

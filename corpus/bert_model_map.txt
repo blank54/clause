@@ -2,3 +2,9 @@
 5.4.1  16  100  0.0002  sigmoid
 5.4.0b  8  100  0.0002  sigmoid
 5.4.1b  16  100  0.0002  sigmoid
+5.4.0s  8  100  0.0002  sigmoid
+5.4.1s  16  100  0.0002  sigmoid
+5.4.2  8  8  0.0002  sigmoid
+5.4.3  8  30  0.0002  sigmoid
+6.0.0  8  100  0.0002  sigmoid
+6.0.1  16  100  0.0002  sigmoid
